@@ -1,0 +1,614 @@
+{
+  "Michigan Wolverines": {
+    "name": "Wolverine",
+    "combatRating": 78,
+    "size": "small",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Berserker rage"
+  },
+  "Arizona Wildcats": {
+    "name": "Wildcat",
+    "combatRating": 70,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Lightning reflexes"
+  },
+  "Duke Blue Devils": {
+    "name": "Blue Devil",
+    "combatRating": 82,
+    "size": "medium",
+    "type": "mythical",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Hellfire manipulation"
+  },
+  "UConn Huskies": {
+    "name": "Husky",
+    "combatRating": 55,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 5,
+    "specialAbility": "Pack endurance"
+  },
+  "Houston Cougars": {
+    "name": "Cougar",
+    "combatRating": 72,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Stealth pounce"
+  },
+  "Illinois Fighting Illini": {
+    "name": "Fighting Illini",
+    "combatRating": 68,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 6,
+    "specialAbility": "Warrior battle cry"
+  },
+  "Iowa State Cyclones": {
+    "name": "Cyclone",
+    "combatRating": 93,
+    "size": "massive",
+    "type": "force-of-nature",
+    "flightCapable": false,
+    "intimidationFactor": 10,
+    "specialAbility": "Devastating vortex"
+  },
+  "Nebraska Cornhuskers": {
+    "name": "Cornhusker",
+    "combatRating": 45,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 3,
+    "specialAbility": "Harvest scythe sweep"
+  },
+  "Kansas Jayhawks": {
+    "name": "Jayhawk",
+    "combatRating": 52,
+    "size": "small",
+    "type": "mythical",
+    "flightCapable": true,
+    "intimidationFactor": 5,
+    "specialAbility": "Guerrilla dive attack"
+  },
+  "Michigan State Spartans": {
+    "name": "Spartan",
+    "combatRating": 80,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Phalanx shield wall"
+  },
+  "Purdue Boilermakers": {
+    "name": "Boilermaker",
+    "combatRating": 65,
+    "size": "large",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 6,
+    "specialAbility": "Superheated steam blast"
+  },
+  "Florida Gators": {
+    "name": "Gator",
+    "combatRating": 78,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Death roll"
+  },
+  "Gonzaga Bulldogs": {
+    "name": "Bulldog",
+    "combatRating": 48,
+    "size": "small",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 5,
+    "specialAbility": "Iron jaw lockdown"
+  },
+  "Texas Tech Red Raiders": {
+    "name": "Red Raider",
+    "combatRating": 73,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Mounted cavalry charge"
+  },
+  "North Carolina Tar Heels": {
+    "name": "Tar Heel",
+    "combatRating": 55,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 4,
+    "specialAbility": "Unyielding resolve"
+  },
+  "Vanderbilt Commodores": {
+    "name": "Commodore",
+    "combatRating": 66,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 6,
+    "specialAbility": "Naval broadside"
+  },
+  "St. John's Red Storm": {
+    "name": "Red Storm",
+    "combatRating": 88,
+    "size": "massive",
+    "type": "force-of-nature",
+    "flightCapable": false,
+    "intimidationFactor": 9,
+    "specialAbility": "Thunderous downpour"
+  },
+  "Louisville Cardinals": {
+    "name": "Cardinal",
+    "combatRating": 35,
+    "size": "small",
+    "type": "animal",
+    "flightCapable": true,
+    "intimidationFactor": 3,
+    "specialAbility": "Crimson dive bomb"
+  },
+  "Tennessee Volunteers": {
+    "name": "Volunteer",
+    "combatRating": 62,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 5,
+    "specialAbility": "Frontier marksmanship"
+  },
+  "Alabama Crimson Tide": {
+    "name": "Crimson Tide",
+    "combatRating": 85,
+    "size": "massive",
+    "type": "force-of-nature",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Relentless surge"
+  },
+  "Arkansas Razorbacks": {
+    "name": "Razorback",
+    "combatRating": 70,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Razor tusk gore"
+  },
+  "Kentucky Wildcats": {
+    "name": "Wildcat",
+    "combatRating": 70,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Savage claw combo"
+  },
+  "Virginia Cavaliers": {
+    "name": "Cavalier",
+    "combatRating": 72,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Rapier precision strike"
+  },
+  "Saint Louis Billikens": {
+    "name": "Billiken",
+    "combatRating": 45,
+    "size": "small",
+    "type": "mythical",
+    "flightCapable": false,
+    "intimidationFactor": 4,
+    "specialAbility": "Lucky charm confusion"
+  },
+  "Iowa Hawkeyes": {
+    "name": "Hawkeye",
+    "combatRating": 60,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 6,
+    "specialAbility": "Precision arrow volley"
+  },
+  "BYU Cougars": {
+    "name": "Cougar",
+    "combatRating": 72,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Mountain ambush"
+  },
+  "Clemson Tigers": {
+    "name": "Tiger",
+    "combatRating": 88,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 9,
+    "specialAbility": "Silent jungle stalk"
+  },
+  "Auburn Tigers": {
+    "name": "Tiger",
+    "combatRating": 88,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 9,
+    "specialAbility": "Ambush strike"
+  },
+  "Villanova Wildcats": {
+    "name": "Wildcat",
+    "combatRating": 70,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Night stalker pounce"
+  },
+  "NC State Wolfpack": {
+    "name": "Wolf Pack",
+    "combatRating": 72,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Coordinated pack assault"
+  },
+  "Wisconsin Badgers": {
+    "name": "Badger",
+    "combatRating": 68,
+    "size": "small",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Relentless ferocity"
+  },
+  "Texas A&M Aggies": {
+    "name": "Aggie",
+    "combatRating": 50,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 4,
+    "specialAbility": "12th man rally"
+  },
+  "Indiana Hoosiers": {
+    "name": "Hoosier",
+    "combatRating": 50,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 4,
+    "specialAbility": "Frontier toughness"
+  },
+  "UCF Knights": {
+    "name": "Knight",
+    "combatRating": 77,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Armored lance charge"
+  },
+  "Utah State Aggies": {
+    "name": "Aggie Bull",
+    "combatRating": 65,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 6,
+    "specialAbility": "Bull rush charge"
+  },
+  "SMU Mustangs": {
+    "name": "Mustang",
+    "combatRating": 68,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Thundering stampede"
+  },
+  "Georgia Bulldogs": {
+    "name": "Bulldog",
+    "combatRating": 52,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 5,
+    "specialAbility": "Tenacious jaw grip"
+  },
+  "USC Trojans": {
+    "name": "Trojan",
+    "combatRating": 78,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Shield wall advance"
+  },
+  "UCLA Bruins": {
+    "name": "Bruin",
+    "combatRating": 82,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 9,
+    "specialAbility": "Crushing bear maul"
+  },
+  "St. Mary's Gaels": {
+    "name": "Gael",
+    "combatRating": 65,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 6,
+    "specialAbility": "Celtic warrior fury"
+  },
+  "Miami FL Hurricanes": {
+    "name": "Hurricane",
+    "combatRating": 90,
+    "size": "massive",
+    "type": "force-of-nature",
+    "flightCapable": false,
+    "intimidationFactor": 9,
+    "specialAbility": "Category 5 devastation"
+  },
+  "Ohio State Buckeyes": {
+    "name": "Buckeye",
+    "combatRating": 20,
+    "size": "small",
+    "type": "object",
+    "flightCapable": false,
+    "intimidationFactor": 1,
+    "specialAbility": "Nut shell deflection"
+  },
+  "San Diego State Aztecs": {
+    "name": "Aztec",
+    "combatRating": 76,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Obsidian blade strike"
+  },
+  "Texas Longhorns": {
+    "name": "Longhorn",
+    "combatRating": 75,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Charging horn gore"
+  },
+  "Santa Clara Broncos": {
+    "name": "Bronco",
+    "combatRating": 66,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 6,
+    "specialAbility": "Wild buck kick"
+  },
+  "Miami OH RedHawks": {
+    "name": "RedHawk",
+    "combatRating": 58,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": true,
+    "intimidationFactor": 6,
+    "specialAbility": "Swooping talon strike"
+  },
+  "Tulsa Golden Hurricane": {
+    "name": "Golden Hurricane",
+    "combatRating": 82,
+    "size": "large",
+    "type": "force-of-nature",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Swirling wind fury"
+  },
+  "Belmont Bruins": {
+    "name": "Bruin",
+    "combatRating": 80,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Powerful bear swipe"
+  },
+  "Liberty Flames": {
+    "name": "Flame",
+    "combatRating": 75,
+    "size": "large",
+    "type": "force-of-nature",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Engulfing inferno"
+  },
+  "Yale Bulldogs": {
+    "name": "Bulldog",
+    "combatRating": 48,
+    "size": "small",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 5,
+    "specialAbility": "Stubborn bite hold"
+  },
+  "Stephen F. Austin Lumberjacks": {
+    "name": "Lumberjack",
+    "combatRating": 70,
+    "size": "large",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Mighty axe cleave"
+  },
+  "High Point Panthers": {
+    "name": "Panther",
+    "combatRating": 80,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Nocturnal stealth attack"
+  },
+  "Utah Valley Wolverines": {
+    "name": "Wolverine",
+    "combatRating": 76,
+    "size": "small",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Feral fury"
+  },
+  "UNC Wilmington Seahawks": {
+    "name": "Seahawk",
+    "combatRating": 52,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": true,
+    "intimidationFactor": 5,
+    "specialAbility": "Coastal dive strike"
+  },
+  "Hawaii Rainbow Warriors": {
+    "name": "Rainbow Warrior",
+    "combatRating": 62,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 6,
+    "specialAbility": "Island war dance"
+  },
+  "North Dakota State Bison": {
+    "name": "Bison",
+    "combatRating": 76,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Thundering herd charge"
+  },
+  "Troy Trojans": {
+    "name": "Trojan",
+    "combatRating": 78,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Wooden horse ambush"
+  },
+  "East Tennessee State Buccaneers": {
+    "name": "Buccaneer",
+    "combatRating": 72,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Cutlass slash combo"
+  },
+  "Portland State Vikings": {
+    "name": "Viking",
+    "combatRating": 78,
+    "size": "large",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 8,
+    "specialAbility": "Nordic axe fury"
+  },
+  "Wright State Raiders": {
+    "name": "Raider",
+    "combatRating": 70,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Surprise pillage attack"
+  },
+  "Austin Peay Governors": {
+    "name": "Governor",
+    "combatRating": 42,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 3,
+    "specialAbility": "Executive order"
+  },
+  "Navy Midshipmen": {
+    "name": "Midshipman",
+    "combatRating": 64,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 6,
+    "specialAbility": "Cannon broadside"
+  },
+  "UT Martin Skyhawks": {
+    "name": "Skyhawk",
+    "combatRating": 56,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": true,
+    "intimidationFactor": 5,
+    "specialAbility": "High altitude dive"
+  },
+  "Merrimack Warriors": {
+    "name": "Warrior",
+    "combatRating": 68,
+    "size": "medium",
+    "type": "human",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Battle axe charge"
+  },
+  "LIU Sharks": {
+    "name": "Shark",
+    "combatRating": 80,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 9,
+    "specialAbility": "Razor bite frenzy"
+  },
+  "Bethune-Cookman Wildcats": {
+    "name": "Wildcat",
+    "combatRating": 70,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 7,
+    "specialAbility": "Feral scratch combo"
+  },
+  "UMBC Retrievers": {
+    "name": "Retriever",
+    "combatRating": 35,
+    "size": "medium",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 2,
+    "specialAbility": "Loyal persistence"
+  },
+  "Morgan State Bears": {
+    "name": "Bear",
+    "combatRating": 82,
+    "size": "large",
+    "type": "animal",
+    "flightCapable": false,
+    "intimidationFactor": 9,
+    "specialAbility": "Crushing bear hug"
+  }
+}

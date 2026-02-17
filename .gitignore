@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Compiled output
+dist/
+
+# SQLite databases (regenerated on startup)
+*.db
+*.db-shm
+*.db-wal
+
+# Simulation output cache
+output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*

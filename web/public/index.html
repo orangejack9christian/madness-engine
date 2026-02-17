@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MadnessEngine — March Madness Simulator 2026</title>
+  <meta name="description" content="20 simulation modes. 68 teams. One champion. The ultimate March Madness prediction engine powered by Monte Carlo simulations.">
+  <meta property="og:title" content="MadnessEngine — March Madness Simulator 2026">
+  <meta property="og:description" content="20 simulation modes. 68 teams. One champion. Predict March Madness with advanced Monte Carlo simulations.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MadnessEngine — March Madness Simulator 2026">
+  <meta name="twitter:description" content="20 simulation modes. 68 teams. One champion.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="/styles.css">
+  <!-- PostHog Analytics (free tier: 1M events/month) -->
+  <script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host.replace(/\/$/,"")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    // TODO: Replace YOUR_PROJECT_KEY with your PostHog project API key from https://app.posthog.com
+    // posthog.init('YOUR_PROJECT_KEY',{api_host:'https://us.i.posthog.com', person_profiles: 'always'})
+  </script>
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <div class="brand-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="2"/>
+          <path d="M8 14C8 14 10 8 14 8C18 8 20 14 20 14C20 14 18 20 14 20C10 20 8 14 8 14Z" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="14" y1="3" x2="14" y2="25" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+          <line x1="3" y1="14" x2="25" y2="14" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+        </svg>
+      </div>
+      <span class="brand-text">MadnessEngine</span>
+      <span class="brand-badge">LIVE</span>
+      <span class="brand-year-badge">2026</span>
+    </div>
+    <div class="nav-tabs-container">
+      <button class="nav-tab active" data-view="dashboard">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-tab" data-view="bracket">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 3h4v4H1zM1 9h4v4H1zM11 5.5h4v5h-4zM5 5h3v0M5 11h3v0M8 5v6M8 8h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Bracket</span>
+      </button>
+      <button class="nav-tab" data-view="teams">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Teams</span>
+      </button>
+      <button class="nav-tab" data-view="h2h">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>Head-to-Head</span>
+      </button>
+      <button class="nav-tab" data-view="picks">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Pick Sheet</span>
+      </button>
+    </div>
+    <div class="nav-controls">
+      <div class="tournament-toggle">
+        <button class="toggle-btn active" data-type="mens">Men's</button>
+        <button class="toggle-btn" data-type="womens">Women's</button>
+      </div>
+      <div class="sim-counter">
+        <span class="counter-label">SIMULATIONS</span>
+        <input type="number" class="sim-count-input" id="sim-count-input" value="10000" min="100" max="100000" step="1000" title="Number of simulations per run">
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    <!-- Mode Selector Bar -->
+    <section class="mode-bar">
+      <div class="mode-bar-inner">
+        <div class="mode-category-filters">
+          <button class="mode-filter active" data-category="all">All</button>
+          <button class="mode-filter" data-category="research">Research</button>
+          <button class="mode-filter" data-category="hybrid">Hybrid</button>
+          <button class="mode-filter" data-category="entertainment">Entertainment</button>
+        </div>
+        <div class="mode-tabs-scroll">
+          <div class="mode-tabs" id="mode-tabs">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+        <div class="mode-info" id="mode-info">
+          <span class="mode-confidence-badge" id="mode-badge">--</span>
+          <span class="mode-description" id="mode-desc">Select a simulation mode</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading State -->
+    <div class="loading-overlay" id="loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Running simulations...</div>
+      <div class="loading-subtext">Crunching probabilities across all rounds</div>
+    </div>
+
+    <!-- Live Games Banner -->
+    <section class="live-games-banner" id="live-games" style="display:none;">
+      <div class="live-games-header">
+        <span class="live-pulse"></span>
+        <h2 class="live-games-title">Live Games</h2>
+        <span class="live-games-count" id="live-games-count">0 active</span>
+      </div>
+      <div class="live-games-grid" id="live-games-grid">
+        <!-- Populated by JS via WebSocket -->
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- VIEW: Dashboard                              -->
+    <!-- ============================================ -->
+    <div class="view-section active" id="view-dashboard">
+      <div class="dashboard" id="dashboard" style="display:none;">
+        <!-- Hero: Champion Prediction -->
+        <section class="card hero-card">
+          <div class="hero-content">
+            <div class="hero-label">Predicted Champion</div>
+            <div class="hero-team" id="hero-team">--</div>
+            <div class="hero-detail">
+              <span class="hero-seed" id="hero-seed"></span>
+              <span class="hero-region" id="hero-region"></span>
+            </div>
+            <div class="hero-prob" id="hero-prob">--</div>
+            <div class="hero-prob-label">championship probability</div>
+          </div>
+          <div class="hero-ff">
+            <div class="ff-label">Most Likely Final Four</div>
+            <div class="ff-teams" id="ff-teams">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Quick Stats Row -->
+        <section class="quick-stats-row">
+          <div class="quick-stat-card">
+            <div class="quick-stat-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2v16M6 6l4-4 4 4M6 14l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="quick-stat-value" id="stat-volatility">--</div>
+            <div class="quick-stat-label">Volatility Index</div>
+          </div>
+          <div class="quick-stat-card">
+            <div class="quick-stat-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 17V7l4-4h6l4 4v10H3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 17v-5h4v5" stroke="currentColor" stroke-width="1.5"/></svg>
+            </div>
+            <div class="quick-stat-value" id="stat-sims-run">--</div>
+            <div class="quick-stat-label">Simulations Run</div>
+          </div>
+          <div class="quick-stat-card">
+            <div class="quick-stat-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.3L10 14.5 5.1 17l.9-5.3-4-3.9 5.5-.8L10 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="quick-stat-value" id="stat-upset">--</div>
+            <div class="quick-stat-label">Biggest Projected Upset</div>
+          </div>
+          <div class="quick-stat-card">
+            <div class="quick-stat-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M6 10h8M10 6v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <div class="quick-stat-value" id="stat-mode-cat">--</div>
+            <div class="quick-stat-label">Mode Category</div>
+          </div>
+          <div class="quick-stat-card">
+            <div class="quick-stat-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="currentColor"/></svg>
+            </div>
+            <div class="quick-stat-value" id="stat-active-games">0</div>
+            <div class="quick-stat-label">Active Games</div>
+          </div>
+          <div class="quick-stat-card">
+            <div class="quick-stat-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M10 5v5l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="quick-stat-value" id="stat-time">--</div>
+            <div class="quick-stat-label">Last Updated</div>
+          </div>
+        </section>
+
+        <!-- Ad Placeholder: Inline Banner -->
+        <div class="ad-placeholder ad-inline-banner" id="ad-inline-banner">
+          <span class="ad-placeholder-label">Ad Space — Responsive Banner</span>
+          <!-- Replace with your ad network code (AdSense, Adsterra, etc.) -->
+        </div>
+
+        <!-- Championship Odds Table -->
+        <section class="card table-card">
+          <div class="card-header">
+            <h2>Championship Odds</h2>
+            <span class="card-subtitle" id="table-subtitle">All 68 teams by title probability</span>
+          </div>
+          <div class="table-controls">
+            <div class="table-search-wrapper">
+              <svg class="table-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <input type="text" class="table-search-input" id="champ-table-search" placeholder="Search teams..." autocomplete="off">
+            </div>
+            <div class="table-view-toggles">
+              <button class="table-view-btn active" data-rows="25">Top 25</button>
+              <button class="table-view-btn" data-rows="68">All 68</button>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="champ-table">
+              <thead>
+                <tr>
+                  <th class="col-rank sortable" data-sort="rank" data-sort-dir="asc"># <span class="sort-icon"></span></th>
+                  <th class="col-team sortable" data-sort="team" data-sort-dir="none">Team <span class="sort-icon"></span></th>
+                  <th class="col-seed sortable" data-sort="seed" data-sort-dir="none">Seed <span class="sort-icon"></span></th>
+                  <th class="col-region sortable" data-sort="region" data-sort-dir="none">Region <span class="sort-icon"></span></th>
+                  <th class="col-prob sortable" data-sort="champ" data-sort-dir="none">Champion <span class="sort-icon"></span></th>
+                  <th class="col-prob sortable" data-sort="ff" data-sort-dir="none">Final Four <span class="sort-icon"></span></th>
+                  <th class="col-prob sortable" data-sort="e8" data-sort-dir="none">Elite 8 <span class="sort-icon"></span></th>
+                  <th class="col-prob sortable" data-sort="s16" data-sort-dir="none">Sweet 16 <span class="sort-icon"></span></th>
+                  <th class="col-ew sortable" data-sort="ew" data-sort-dir="none">E[Wins] <span class="sort-icon"></span></th>
+                </tr>
+              </thead>
+              <tbody id="champ-tbody">
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span class="table-row-count" id="table-row-count">Showing 0 teams</span>
+          </div>
+        </section>
+
+        <!-- Region Cards -->
+        <div class="regions-grid">
+          <section class="card region-card" data-region="east">
+            <div class="card-header region-header">
+              <h2><span class="region-dot east-dot"></span>East</h2>
+              <span class="region-favorite" id="region-east-fav"></span>
+            </div>
+            <div class="region-teams" id="region-east"></div>
+          </section>
+          <section class="card region-card" data-region="west">
+            <div class="card-header region-header">
+              <h2><span class="region-dot west-dot"></span>West</h2>
+              <span class="region-favorite" id="region-west-fav"></span>
+            </div>
+            <div class="region-teams" id="region-west"></div>
+          </section>
+          <section class="card region-card" data-region="south">
+            <div class="card-header region-header">
+              <h2><span class="region-dot south-dot"></span>South</h2>
+              <span class="region-favorite" id="region-south-fav"></span>
+            </div>
+            <div class="region-teams" id="region-south"></div>
+          </section>
+          <section class="card region-card" data-region="midwest">
+            <div class="card-header region-header">
+              <h2><span class="region-dot midwest-dot"></span>Midwest</h2>
+              <span class="region-favorite" id="region-midwest-fav"></span>
+            </div>
+            <div class="region-teams" id="region-midwest"></div>
+          </section>
+        </div>
+
+        <!-- Mode Comparison -->
+        <section class="card compare-card" id="compare-section" style="display:none;">
+          <div class="card-header">
+            <h2>Cross-Mode Comparison</h2>
+            <div class="compare-controls">
+              <span class="compare-hint">Top 10 teams per mode</span>
+              <button class="btn-compare" id="btn-compare">Compare All Modes</button>
+            </div>
+          </div>
+          <div class="compare-grid" id="compare-grid"></div>
+          <div class="compare-chart-container">
+            <canvas id="compare-chart"></canvas>
+          </div>
+        </section>
+
+        <!-- Stats Bar (legacy, kept for JS compatibility) -->
+        <section class="stats-bar">
+          <div class="stat-item">
+            <div class="stat-value" id="stat-volatility-legacy">--</div>
+            <div class="stat-label">Volatility Index</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-upset-legacy">--</div>
+            <div class="stat-label">Biggest Projected Upset</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-time-legacy">--</div>
+            <div class="stat-label">Last Updated</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-mode-cat-legacy">--</div>
+            <div class="stat-label">Mode Category</div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- VIEW: Bracket                                -->
+    <!-- ============================================ -->
+    <div class="view-section" id="view-bracket" style="display:none;">
+      <div class="bracket-container">
+        <div class="bracket-toolbar">
+          <h2 class="bracket-title">Full Tournament Bracket</h2>
+          <div class="bracket-controls">
+            <select class="bracket-mode-select" id="bracket-mode-select">
+              <!-- Populated by JS from modes[] -->
+            </select>
+            <div class="bracket-sim-group">
+              <input type="number" class="bracket-sim-input" id="bracket-sim-count" value="10000" min="100" max="100000" step="1000" title="Number of simulations">
+              <span class="bracket-sim-label">sims</span>
+            </div>
+            <button class="btn-simulate-bracket" id="btn-simulate-bracket">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 2l10 6-10 6V2z" fill="currentColor"/></svg>
+              Simulate
+            </button>
+            <div class="bracket-divider"></div>
+            <button class="bracket-zoom-btn" id="bracket-zoom-in" title="Zoom In">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M13 13l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 5.5v5M5.5 8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+            <button class="bracket-zoom-btn" id="bracket-zoom-out" title="Zoom Out">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M13 13l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+            <button class="bracket-zoom-btn" id="bracket-zoom-reset" title="Reset Zoom">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 3l12 12M15 3L3 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+            <select class="bracket-region-select" id="bracket-region-filter">
+              <option value="all">All Regions</option>
+              <option value="east">East</option>
+              <option value="west">West</option>
+              <option value="south">South</option>
+              <option value="midwest">Midwest</option>
+            </select>
+          </div>
+        </div>
+        <div class="bracket-viewport" id="bracket-viewport">
+          <div class="bracket-svg-container" id="bracket-svg">
+            <!-- SVG bracket populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- VIEW: Teams                                  -->
+    <!-- ============================================ -->
+    <div class="view-section" id="view-teams" style="display:none;">
+      <div class="teams-container">
+        <div class="teams-toolbar">
+          <h2 class="teams-title">All Teams</h2>
+          <div class="teams-controls">
+            <div class="teams-search-wrapper">
+              <svg class="teams-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <input type="text" class="teams-search-input" id="teams-search" placeholder="Search by team, conference, or region..." autocomplete="off">
+            </div>
+            <select class="teams-region-filter" id="teams-region-filter">
+              <option value="all">All Regions</option>
+              <option value="east">East</option>
+              <option value="west">West</option>
+              <option value="south">South</option>
+              <option value="midwest">Midwest</option>
+            </select>
+            <select class="teams-seed-filter" id="teams-seed-filter">
+              <option value="all">All Seeds</option>
+              <option value="1">1 Seed</option>
+              <option value="2">2 Seed</option>
+              <option value="3">3 Seed</option>
+              <option value="4">4 Seed</option>
+              <option value="5">5 Seed</option>
+              <option value="6">6 Seed</option>
+              <option value="7">7 Seed</option>
+              <option value="8">8 Seed</option>
+              <option value="9">9 Seed</option>
+              <option value="10">10 Seed</option>
+              <option value="11">11 Seed</option>
+              <option value="12">12 Seed</option>
+              <option value="13">13 Seed</option>
+              <option value="14">14 Seed</option>
+              <option value="15">15 Seed</option>
+              <option value="16">16 Seed</option>
+            </select>
+          </div>
+        </div>
+        <div class="teams-table-wrapper">
+          <table class="data-table teams-table" id="teams-table">
+            <thead>
+              <tr>
+                <th class="col-rank sortable" data-sort="rank" data-sort-dir="asc"># <span class="sort-icon"></span></th>
+                <th class="col-team sortable" data-sort="team" data-sort-dir="none">Team <span class="sort-icon"></span></th>
+                <th class="col-seed sortable" data-sort="seed" data-sort-dir="none">Seed <span class="sort-icon"></span></th>
+                <th class="col-region sortable" data-sort="region" data-sort-dir="none">Region <span class="sort-icon"></span></th>
+                <th class="col-conf sortable" data-sort="conf" data-sort-dir="none">Conf <span class="sort-icon"></span></th>
+                <th class="col-record sortable" data-sort="record" data-sort-dir="none">Record <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="adjoe" data-sort-dir="none">AdjOE <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="adjde" data-sort-dir="none">AdjDE <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="tempo" data-sort-dir="none">Tempo <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="sos" data-sort-dir="none">SOS <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="efg" data-sort-dir="none">eFG% <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="tov" data-sort-dir="none">TO% <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="orb" data-sort-dir="none">OR% <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="ftrate" data-sort-dir="none">FT Rate <span class="sort-icon"></span></th>
+                <th class="col-prob sortable" data-sort="champ" data-sort-dir="none">Champ% <span class="sort-icon"></span></th>
+                <th class="col-prob sortable" data-sort="ff" data-sort-dir="none">FF% <span class="sort-icon"></span></th>
+                <th class="col-ew sortable" data-sort="ew" data-sort-dir="none">E[Wins] <span class="sort-icon"></span></th>
+              </tr>
+            </thead>
+            <tbody id="teams-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="teams-table-footer">
+          <span class="teams-row-count" id="teams-row-count">Showing 0 teams</span>
+        </div>
+
+        <!-- Team Detail Panel (slide-in) — content generated by showTeamDetail() -->
+        <div class="team-detail-panel" id="team-detail-panel" style="display:none;">
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- VIEW: Head-to-Head                           -->
+    <!-- ============================================ -->
+    <div class="view-section" id="view-h2h" style="display:none;">
+      <div class="h2h-container">
+        <div class="h2h-header">
+          <h2 class="h2h-title">Head-to-Head Comparison</h2>
+          <p class="h2h-subtitle">Select two teams to compare their tournament metrics and probability profiles</p>
+        </div>
+
+        <div class="h2h-selector-row">
+          <div class="h2h-team-selector">
+            <label class="h2h-selector-label" for="h2h-team-a">Team A</label>
+            <select class="h2h-team-dropdown" id="h2h-team-a">
+              <option value="">Select a team...</option>
+              <!-- Populated by JS -->
+            </select>
+          </div>
+          <div class="h2h-vs-badge">VS</div>
+          <div class="h2h-team-selector">
+            <label class="h2h-selector-label" for="h2h-team-b">Team B</label>
+            <select class="h2h-team-dropdown" id="h2h-team-b">
+              <option value="">Select a team...</option>
+              <!-- Populated by JS -->
+            </select>
+          </div>
+          <button class="btn-h2h-compare" id="btn-h2h-compare">Compare</button>
+        </div>
+
+        <div class="h2h-results" id="h2h-results" style="display:none;">
+          <!-- Side-by-Side Metrics -->
+          <div class="h2h-metrics-grid">
+            <div class="h2h-team-col h2h-team-a-col">
+              <div class="h2h-team-name" id="h2h-name-a">--</div>
+              <div class="h2h-team-info" id="h2h-info-a">--</div>
+            </div>
+            <div class="h2h-labels-col">
+              <div class="h2h-metric-label-row">Metric</div>
+            </div>
+            <div class="h2h-team-col h2h-team-b-col">
+              <div class="h2h-team-name" id="h2h-name-b">--</div>
+              <div class="h2h-team-info" id="h2h-info-b">--</div>
+            </div>
+          </div>
+
+          <div class="h2h-comparison-table">
+            <table class="data-table h2h-table" id="h2h-metrics-table">
+              <thead>
+                <tr>
+                  <th class="h2h-col-val-a">Team A</th>
+                  <th class="h2h-col-metric">Metric</th>
+                  <th class="h2h-col-val-b">Team B</th>
+                </tr>
+              </thead>
+              <tbody id="h2h-metrics-tbody">
+                <tr>
+                  <td class="h2h-val" id="h2h-a-seed">--</td>
+                  <td class="h2h-metric-name">Seed</td>
+                  <td class="h2h-val" id="h2h-b-seed">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-adjoe">--</td>
+                  <td class="h2h-metric-name">Adj. Offensive Eff.</td>
+                  <td class="h2h-val" id="h2h-b-adjoe">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-adjde">--</td>
+                  <td class="h2h-metric-name">Adj. Defensive Eff.</td>
+                  <td class="h2h-val" id="h2h-b-adjde">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-tempo">--</td>
+                  <td class="h2h-metric-name">Tempo</td>
+                  <td class="h2h-val" id="h2h-b-tempo">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-sos">--</td>
+                  <td class="h2h-metric-name">Strength of Schedule</td>
+                  <td class="h2h-val" id="h2h-b-sos">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-efg">--</td>
+                  <td class="h2h-metric-name">Effective FG%</td>
+                  <td class="h2h-val" id="h2h-b-efg">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-tov">--</td>
+                  <td class="h2h-metric-name">Turnover Rate</td>
+                  <td class="h2h-val" id="h2h-b-tov">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-orb">--</td>
+                  <td class="h2h-metric-name">Off. Rebound%</td>
+                  <td class="h2h-val" id="h2h-b-orb">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-ftrate">--</td>
+                  <td class="h2h-metric-name">Free Throw Rate</td>
+                  <td class="h2h-val" id="h2h-b-ftrate">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-champ">--</td>
+                  <td class="h2h-metric-name">Championship%</td>
+                  <td class="h2h-val" id="h2h-b-champ">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-ff">--</td>
+                  <td class="h2h-metric-name">Final Four%</td>
+                  <td class="h2h-val" id="h2h-b-ff">--</td>
+                </tr>
+                <tr>
+                  <td class="h2h-val" id="h2h-a-ew">--</td>
+                  <td class="h2h-metric-name">Expected Wins</td>
+                  <td class="h2h-val" id="h2h-b-ew">--</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- H2H Probability Chart -->
+          <div class="h2h-chart-section">
+            <h3>Probability Comparison</h3>
+            <div class="h2h-chart-container">
+              <canvas id="h2h-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- H2H Win Probability -->
+          <div class="h2h-win-prob-section">
+            <h3>Head-to-Head Win Probability</h3>
+            <div class="h2h-win-bar">
+              <div class="h2h-win-a" id="h2h-win-a" style="width:50%">
+                <span class="h2h-win-pct" id="h2h-win-pct-a">50%</span>
+              </div>
+              <div class="h2h-win-b" id="h2h-win-b" style="width:50%">
+                <span class="h2h-win-pct" id="h2h-win-pct-b">50%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mode-by-Mode Comparison Table -->
+          <div class="h2h-mode-section">
+            <h3>Mode-by-Mode Comparison</h3>
+            <div class="h2h-mode-table-wrapper">
+              <table class="data-table h2h-mode-table" id="h2h-mode-table">
+                <thead>
+                  <tr>
+                    <th class="col-mode">Mode</th>
+                    <th class="col-team-a-prob">Team A Champ%</th>
+                    <th class="col-team-a-ff">Team A FF%</th>
+                    <th class="col-team-b-prob">Team B Champ%</th>
+                    <th class="col-team-b-ff">Team B FF%</th>
+                    <th class="col-edge">Edge</th>
+                  </tr>
+                </thead>
+                <tbody id="h2h-mode-tbody">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- VIEW: Pick Sheet                             -->
+    <!-- ============================================ -->
+    <div class="view-section" id="view-picks" style="display:none;">
+      <div class="picks-container">
+        <div class="picks-header">
+          <h2 class="picks-title">Interactive Pick Sheet</h2>
+          <p class="picks-instructions">Click on each matchup to make your pick. Your bracket will be scored in real-time against simulation probabilities. Higher confidence picks earn more points when correct.</p>
+          <div class="picks-score-display">
+            <div class="picks-score-item">
+              <span class="picks-score-label">Your Score</span>
+              <span class="picks-score-value" id="picks-score">0</span>
+            </div>
+            <div class="picks-score-item">
+              <span class="picks-score-label">Max Possible</span>
+              <span class="picks-score-value" id="picks-max-score">192</span>
+            </div>
+            <div class="picks-score-item">
+              <span class="picks-score-label">Percentile</span>
+              <span class="picks-score-value" id="picks-percentile">--</span>
+            </div>
+            <div class="picks-score-item">
+              <span class="picks-score-label">Upsets Picked</span>
+              <span class="picks-score-value" id="picks-upsets">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="picks-controls">
+          <button class="btn-picks" id="btn-picks-chalk">Auto-Fill Chalk</button>
+          <button class="btn-picks" id="btn-picks-sim">Auto-Fill Sim Favorites</button>
+          <button class="btn-picks" id="btn-picks-random">Random Bracket</button>
+          <button class="btn-picks btn-picks-danger" id="btn-picks-reset">Reset All Picks</button>
+          <button class="btn-picks btn-picks-export" id="btn-picks-export">Export Picks</button>
+        </div>
+        <div class="pick-bracket-wrapper">
+          <div class="pick-bracket" id="pick-bracket">
+            <!-- Bracket pick area populated by JS -->
+          </div>
+        </div>
+        <div class="picks-summary" id="picks-summary" style="display:none;">
+          <h3>Pick Summary</h3>
+          <div class="picks-summary-grid" id="picks-summary-grid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Ad Placeholder: Bottom Banner -->
+  <div class="ad-placeholder ad-bottom-banner" id="ad-bottom-banner">
+    <span class="ad-placeholder-label">Ad Space — 728x90</span>
+    <!-- Replace with your ad network code (AdSense, Adsterra, etc.) -->
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <span>MadnessEngine v2.0</span>
+      <span class="footer-sep">·</span>
+      <span>2026 Edition</span>
+      <span class="footer-sep">·</span>
+      <span>20 Simulation Modes · 68 Teams · One Champion</span>
+      <span class="footer-sep">·</span>
+      <span>Monte Carlo Engine</span>
+      <span class="footer-sep">·</span>
+      <span>Not affiliated with the NCAA</span>
+    </div>
+    <div class="footer-support">
+      <a href="https://buymeacoffee.com" target="_blank" rel="noopener noreferrer" class="bmac-button" id="bmac-button">
+        <svg width="20" height="20" viewBox="0 0 884 1279" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M791.1 416.5C791.1 416.5 766 413 758.5 368.5C751 324 706 309.5 706 309.5L710.5 278L584.5 261L565.5 335C565.5 335 534 330.5 530.5 374C527 417.5 559 434 559 434L549 455.5L480 441L476 478L406 464.5L398.5 505L284 476.5L273.5 522C273.5 522 195 500.5 192 548C189 595.5 259 620.5 259 620.5L225 945.5H654L620 620.5C620 620.5 705.5 598 700.5 548C695.5 498 620 522 620 522L632 476.5L574 491L578 455.5L522 468.5L531 434C531 434 559.5 441.5 571.5 416.5C583.5 391.5 564 368.5 564 368.5L572 335C572 335 598 342 621 335C644 328 650.5 298 650.5 298L710.5 309.5" fill="#FFDD00"/>
+          <path d="M334 775L328 945.5H561L555 775" stroke="#000" stroke-width="12"/>
+          <path d="M325 945.5C325 945.5 299 1090.5 438 1098.5C577 1106.5 564 945.5 564 945.5" stroke="#000" stroke-width="18"/>
+        </svg>
+        Buy Me a Coffee
+      </a>
+      <span class="footer-support-text">Enjoy MadnessEngine? Support the project!</span>
+    </div>
+  </footer>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toast-container">
+    <!-- Toasts appended here by JS -->
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

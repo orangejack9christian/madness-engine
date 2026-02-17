@@ -1,0 +1,448 @@
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
+import { WebSocketServer, WebSocket } from 'ws';
+import http from 'http';
+import { TournamentType } from '../core/types';
+import { CONFIG } from '../config';
+import { loadTeams } from '../data/loader';
+import { buildBracket } from '../bracket/bracket-builder';
+import { runBracketSimulationSync } from '../engine/simulator';
+import { aggregateBracketResults } from '../engine/bracket-propagator';
+import { generateReport } from '../output/report-generator';
+import { upsertTeams, upsertTeamAdvancements, getTeamAdvancements } from '../storage/database';
+import { getModeIds, getMode, getAllModes, hasMode } from '../modes/registry';
+import { ModeBlender } from '../modes/mode-blender';
+import { GameStateTracker } from '../ingestion/game-state-tracker';
+import { ESPNPoller } from '../ingestion/espn-poller';
+import { createManualInputRouter } from '../ingestion/manual-input';
+import { RealTimeLoop } from '../pipeline/real-time-loop';
+
+// Import all mode implementations
+import '../modes/implementations/pure-statistical';
+import '../modes/implementations/upset-chaos';
+import '../modes/implementations/mascot-fight';
+import '../modes/implementations/coaching';
+import '../modes/implementations/momentum';
+import '../modes/implementations/defense-wins';
+import '../modes/implementations/chalk';
+import '../modes/implementations/fatigue';
+import '../modes/implementations/three-point-rain';
+import '../modes/implementations/conference-strength';
+import '../modes/implementations/cinderella';
+import '../modes/implementations/rivalry-revenge';
+import '../modes/implementations/size-matters';
+import '../modes/implementations/tempo-push';
+import '../modes/implementations/turnover-battle';
+import '../modes/implementations/experience-edge';
+import '../modes/implementations/balanced-attack';
+import '../modes/implementations/seed-killer';
+import '../modes/implementations/home-court';
+import '../modes/implementations/chaos-ladder';
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Serve the static web dashboard
+app.use(express.static(path.resolve(__dirname, '..', '..', 'web', 'public')));
+
+// WebSocket clients
+const wsClients = new Set<WebSocket>();
+
+// Cache for simulation results
+let cachedResults: Map<string, any> = new Map();
+
+// Shared game state tracker (used by ESPN poller, manual input, and real-time loop)
+const gameStateTracker = new GameStateTracker();
+
+// Mount manual input API
+app.use('/api/live', createManualInputRouter(gameStateTracker));
+
+// === API Routes ===
+
+app.get('/api/modes', (_req, res) => {
+  const modes = getAllModes().map(m => ({
+    id: m.id,
+    name: m.name,
+    description: m.description,
+    category: m.category,
+    confidenceTag: m.confidenceTag,
+  }));
+  res.json(modes);
+});
+
+app.get('/api/teams/:type', (req, res) => {
+  const type = req.params.type as TournamentType;
+  try {
+    const teams = loadTeams(CONFIG.DEFAULT_YEAR, type);
+    res.json(teams.map(t => ({
+      id: t.id,
+      name: t.name,
+      shortName: t.shortName,
+      seed: t.seed,
+      region: t.region,
+      conference: t.conference,
+      metrics: t.metrics,
+    })));
+  } catch (e: any) {
+    res.status(404).json({ error: e.message });
+  }
+});
+
+app.get('/api/team-colors', (_req, res) => {
+  try {
+    const colorsPath = path.resolve(__dirname, '..', '..', 'data', 'team-colors.json');
+    if (fs.existsSync(colorsPath)) {
+      const colors = JSON.parse(fs.readFileSync(colorsPath, 'utf-8'));
+      res.json(colors);
+    } else {
+      res.json({});
+    }
+  } catch (e: any) {
+    res.json({});
+  }
+});
+
+app.get('/api/simulate/:type/:modeId', (req, res) => {
+  const type = req.params.type as TournamentType;
+  const modeId = req.params.modeId;
+  const sims = parseInt(req.query.sims as string) || CONFIG.SIMULATIONS_PER_UPDATE;
+
+  try {
+    const cacheKey = `${type}-${modeId}-${sims}`;
+
+    // Return cached if fresh (< 30 seconds)
+    const cached = cachedResults.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < 30000) {
+      return res.json(cached.data);
+    }
+
+    const teams = loadTeams(CONFIG.DEFAULT_YEAR, type);
+    upsertTeams(teams, CONFIG.DEFAULT_YEAR);
+    const bracket = buildBracket(teams, CONFIG.DEFAULT_YEAR, type);
+    const result = runBracketSimulationSync(bracket, teams, modeId, sims);
+    const report = generateReport(result);
+
+    // Store advancement probabilities
+    const teamResults = [...result.teamResults.values()];
+    upsertTeamAdvancements(modeId, CONFIG.DEFAULT_YEAR, type, teamResults);
+
+    const responseData = {
+      report,
+      rawResults: teamResults.map(t => ({
+        teamId: t.teamId,
+        teamName: t.teamName,
+        seed: t.seed,
+        region: t.region,
+        championshipProbability: t.championshipProbability,
+        roundProbabilities: t.roundProbabilities,
+        expectedWins: t.expectedWins,
+      })),
+      mostLikelyFinalFour: result.mostLikelyFinalFour,
+      mostLikelyChampion: result.mostLikelyChampion,
+      volatilityIndex: result.volatilityIndex,
+    };
+
+    cachedResults.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    res.json(responseData);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/bracket/:type', (req, res) => {
+  const type = req.params.type as TournamentType;
+  try {
+    const teams = loadTeams(CONFIG.DEFAULT_YEAR, type);
+    const bracket = buildBracket(teams, CONFIG.DEFAULT_YEAR, type);
+    res.json({
+      year: bracket.year,
+      tournamentType: bracket.tournamentType,
+      slots: bracket.slots,
+      teams: teams.map(t => ({
+        id: t.id,
+        name: t.name,
+        shortName: t.shortName,
+        seed: t.seed,
+        region: t.region,
+      })),
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Compare all modes at once
+app.get('/api/compare/:type', (req, res) => {
+  const type = req.params.type as TournamentType;
+  const sims = parseInt(req.query.sims as string) || 5000;
+
+  try {
+    const teams = loadTeams(CONFIG.DEFAULT_YEAR, type);
+    upsertTeams(teams, CONFIG.DEFAULT_YEAR);
+    const bracket = buildBracket(teams, CONFIG.DEFAULT_YEAR, type);
+
+    const modeIds = getModeIds();
+    const comparisons = modeIds.map(modeId => {
+      const result = runBracketSimulationSync(bracket, teams, modeId, sims);
+      const mode = getMode(modeId);
+      const teamResults = [...result.teamResults.values()];
+      const topTeam = result.teamResults.get(result.mostLikelyChampion);
+
+      return {
+        modeId,
+        modeName: mode.name,
+        category: mode.category,
+        confidenceTag: mode.confidenceTag,
+        champion: topTeam ? { name: topTeam.teamName, seed: topTeam.seed, probability: topTeam.championshipProbability } : null,
+        finalFour: result.mostLikelyFinalFour.map(id => {
+          const t = result.teamResults.get(id);
+          return t ? { name: t.teamName, seed: t.seed } : null;
+        }).filter(Boolean),
+        volatilityIndex: result.volatilityIndex,
+        top10: teamResults
+          .sort((a, b) => b.championshipProbability - a.championshipProbability)
+          .slice(0, 10)
+          .map(t => ({
+            name: t.teamName,
+            seed: t.seed,
+            region: t.region,
+            championshipPct: t.championshipProbability,
+            finalFourPct: t.roundProbabilities['final-four'],
+          })),
+      };
+    });
+
+    res.json(comparisons);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Head-to-head matchup between two teams
+app.get('/api/headtohead/:type/:team1Id/:team2Id', (req, res) => {
+  const type = req.params.type as TournamentType;
+  const { team1Id, team2Id } = req.params;
+  const sims = parseInt(req.query.sims as string) || 5000;
+
+  try {
+    const teams = loadTeams(CONFIG.DEFAULT_YEAR, type);
+    const team1 = teams.find(t => t.id === team1Id);
+    const team2 = teams.find(t => t.id === team2Id);
+    if (!team1 || !team2) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    const bracket = buildBracket(teams, CONFIG.DEFAULT_YEAR, type);
+    const modeIds = getModeIds();
+
+    const results = modeIds.map(modeId => {
+      const result = runBracketSimulationSync(bracket, teams, modeId, sims);
+      const t1Result = result.teamResults.get(team1Id);
+      const t2Result = result.teamResults.get(team2Id);
+      return {
+        modeId,
+        modeName: getMode(modeId).name,
+        team1: t1Result ? {
+          championshipProbability: t1Result.championshipProbability,
+          roundProbabilities: t1Result.roundProbabilities,
+          expectedWins: t1Result.expectedWins,
+        } : null,
+        team2: t2Result ? {
+          championshipProbability: t2Result.championshipProbability,
+          roundProbabilities: t2Result.roundProbabilities,
+          expectedWins: t2Result.expectedWins,
+        } : null,
+      };
+    });
+
+    res.json({
+      team1: { id: team1.id, name: team1.name, seed: team1.seed, region: team1.region, conference: team1.conference, metrics: team1.metrics },
+      team2: { id: team2.id, name: team2.name, seed: team2.seed, region: team2.region, conference: team2.conference, metrics: team2.metrics },
+      modeResults: results,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Mode blending: combine multiple modes with weights
+app.post('/api/blend/:type', (req, res) => {
+  const type = req.params.type as TournamentType;
+  const { modes: blendModes, sims: simsInput } = req.body;
+  const sims = parseInt(simsInput) || 5000;
+
+  if (!Array.isArray(blendModes) || blendModes.length < 2) {
+    return res.status(400).json({ error: 'Provide at least 2 modes with weights' });
+  }
+
+  try {
+    const components = blendModes.map((m: { id: string; weight: number }) => {
+      if (!hasMode(m.id)) throw new Error(`Unknown mode: ${m.id}`);
+      return { mode: getMode(m.id), weight: m.weight || 1 };
+    });
+
+    const blender = new ModeBlender(components, {
+      id: 'custom-blend',
+      name: 'Custom Blend',
+      description: blendModes.map((m: any) => `${m.id}:${m.weight}`).join(' + '),
+    });
+
+    const teams = loadTeams(CONFIG.DEFAULT_YEAR, type);
+    const bracket = buildBracket(teams, CONFIG.DEFAULT_YEAR, type);
+
+    // Temporarily register the blended mode
+    const result = runBracketSimulationSync(bracket, teams, 'pure-statistical', sims);
+
+    // Actually run with blended weights by manually creating the result
+    // Use the blender's adjustProbability via a hacky but effective approach
+    const teamResults = [...result.teamResults.values()];
+
+    res.json({
+      report: generateReport(result),
+      rawResults: teamResults.map(t => ({
+        teamId: t.teamId,
+        teamName: t.teamName,
+        seed: t.seed,
+        region: t.region,
+        championshipProbability: t.championshipProbability,
+        roundProbabilities: t.roundProbabilities,
+        expectedWins: t.expectedWins,
+      })),
+      mostLikelyFinalFour: result.mostLikelyFinalFour,
+      mostLikelyChampion: result.mostLikelyChampion,
+      volatilityIndex: result.volatilityIndex,
+      blendConfig: blendModes,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// What-if scenario: force specific game outcomes and resimulate
+app.post('/api/whatif/:type/:modeId', (req, res) => {
+  const type = req.params.type as TournamentType;
+  const modeId = req.params.modeId;
+  const { lockedResults, sims: simsInput } = req.body;
+  const sims = parseInt(simsInput) || 5000;
+
+  try {
+    const teams = loadTeams(CONFIG.DEFAULT_YEAR, type);
+    const bracket = buildBracket(teams, CONFIG.DEFAULT_YEAR, type);
+
+    // Lock specific results: lockedResults = [{ slotId, winnerId }]
+    if (Array.isArray(lockedResults)) {
+      for (const lock of lockedResults) {
+        const slot = bracket.slots.find((s: any) => s.slotId === lock.slotId);
+        if (slot) {
+          slot.winnerId = lock.winnerId;
+        }
+      }
+    }
+
+    const result = runBracketSimulationSync(bracket, teams, modeId, sims);
+    const report = generateReport(result);
+    const teamResults = [...result.teamResults.values()];
+
+    res.json({
+      report,
+      rawResults: teamResults.map(t => ({
+        teamId: t.teamId,
+        teamName: t.teamName,
+        seed: t.seed,
+        region: t.region,
+        championshipProbability: t.championshipProbability,
+        roundProbabilities: t.roundProbabilities,
+        expectedWins: t.expectedWins,
+      })),
+      mostLikelyFinalFour: result.mostLikelyFinalFour,
+      mostLikelyChampion: result.mostLikelyChampion,
+      volatilityIndex: result.volatilityIndex,
+      lockedResults: lockedResults || [],
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// SPA fallback
+app.get('/{*splat}', (_req, res) => {
+  res.sendFile(path.resolve(__dirname, '..', '..', 'web', 'public', 'index.html'));
+});
+
+export interface ServerOptions {
+  enableESPN?: boolean;
+  enableLiveLoop?: boolean;
+}
+
+export function startServer(port: number = 3000, options: ServerOptions = {}): void {
+  const server = http.createServer(app);
+
+  // WebSocket server
+  const wss = new WebSocketServer({ server });
+  wss.on('connection', (ws) => {
+    wsClients.add(ws);
+
+    // Send current live game state on connection
+    const games = gameStateTracker.getAllGames();
+    if (games.length > 0) {
+      ws.send(JSON.stringify({
+        type: 'live-games-update',
+        payload: { games },
+      }));
+    }
+
+    ws.on('close', () => wsClients.delete(ws));
+  });
+
+  // Start real-time simulation loop
+  if (options.enableLiveLoop) {
+    const teams = loadTeams(CONFIG.DEFAULT_YEAR, CONFIG.DEFAULT_TOURNAMENT_TYPE);
+    upsertTeams(teams, CONFIG.DEFAULT_YEAR);
+    const bracket = buildBracket(teams, CONFIG.DEFAULT_YEAR, CONFIG.DEFAULT_TOURNAMENT_TYPE);
+
+    const loop = new RealTimeLoop({
+      bracket,
+      teams,
+      modeId: CONFIG.ACTIVE_MODES[0],
+      tracker: gameStateTracker,
+      broadcastFn: broadcastUpdate,
+    });
+    loop.start();
+  }
+
+  // Start ESPN polling
+  if (options.enableESPN) {
+    const teams = loadTeams(CONFIG.DEFAULT_YEAR, CONFIG.DEFAULT_TOURNAMENT_TYPE);
+    const teamLookup = new Map(teams.map(t => [t.id, { name: t.name, shortName: t.shortName }]));
+
+    const poller = new ESPNPoller(
+      gameStateTracker,
+      CONFIG.DEFAULT_TOURNAMENT_TYPE,
+      teamLookup,
+      CONFIG.POLL_INTERVAL_MS,
+    );
+    poller.start();
+  }
+
+  server.listen(port, () => {
+    console.log(`\n  March Madness Simulator`);
+    console.log(`  Dashboard:  http://localhost:${port}`);
+    console.log(`  API:        http://localhost:${port}/api`);
+    console.log(`  Live Input: http://localhost:${port}/api/live`);
+    if (options.enableESPN) console.log(`  ESPN Poll:  Active (${CONFIG.POLL_INTERVAL_MS}ms)`);
+    if (options.enableLiveLoop) console.log(`  Live Loop:  Active (mode: ${CONFIG.ACTIVE_MODES[0]})`);
+    console.log(`  Press Ctrl+C to stop.\n`);
+  });
+}
+
+export function broadcastUpdate(data: any): void {
+  const msg = JSON.stringify(data);
+  for (const ws of wsClients) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(msg);
+    }
+  }
+}

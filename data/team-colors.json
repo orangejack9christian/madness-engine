@@ -1,0 +1,342 @@
+{
+  "michigan-2026": {
+    "primary": "#00274C",
+    "secondary": "#FFCB05",
+    "abbrev": "MICH"
+  },
+  "arizona-2026": {
+    "primary": "#CC0033",
+    "secondary": "#003366",
+    "abbrev": "ARIZ"
+  },
+  "duke-2026": {
+    "primary": "#003087",
+    "secondary": "#FFFFFF",
+    "abbrev": "DUKE"
+  },
+  "uconn-2026": {
+    "primary": "#000E2F",
+    "secondary": "#FFFFFF",
+    "abbrev": "UCON"
+  },
+  "houston-2026": {
+    "primary": "#C8102E",
+    "secondary": "#FFFFFF",
+    "abbrev": "HOU"
+  },
+  "illinois-2026": {
+    "primary": "#E84A27",
+    "secondary": "#13294B",
+    "abbrev": "ILL"
+  },
+  "iowa-state-2026": {
+    "primary": "#C8102E",
+    "secondary": "#F1BE48",
+    "abbrev": "ISU"
+  },
+  "nebraska-2026": {
+    "primary": "#D00000",
+    "secondary": "#F5F1E7",
+    "abbrev": "NEB"
+  },
+  "kansas-2026": {
+    "primary": "#0051BA",
+    "secondary": "#E8000D",
+    "abbrev": "KU"
+  },
+  "michigan-state-2026": {
+    "primary": "#18453B",
+    "secondary": "#FFFFFF",
+    "abbrev": "MSU"
+  },
+  "purdue-2026": {
+    "primary": "#CEB888",
+    "secondary": "#000000",
+    "abbrev": "PUR"
+  },
+  "florida-2026": {
+    "primary": "#0021A5",
+    "secondary": "#FA4616",
+    "abbrev": "FLA"
+  },
+  "gonzaga-2026": {
+    "primary": "#002967",
+    "secondary": "#C8102E",
+    "abbrev": "GONZ"
+  },
+  "texas-tech-2026": {
+    "primary": "#CC0000",
+    "secondary": "#000000",
+    "abbrev": "TTU"
+  },
+  "north-carolina-2026": {
+    "primary": "#7BAFD4",
+    "secondary": "#13294B",
+    "abbrev": "UNC"
+  },
+  "vanderbilt-2026": {
+    "primary": "#000000",
+    "secondary": "#CFB991",
+    "abbrev": "VAN"
+  },
+  "st-johns-2026": {
+    "primary": "#D0202E",
+    "secondary": "#FFFFFF",
+    "abbrev": "SJU"
+  },
+  "louisville-2026": {
+    "primary": "#AD0000",
+    "secondary": "#000000",
+    "abbrev": "LOU"
+  },
+  "tennessee-2026": {
+    "primary": "#FF8200",
+    "secondary": "#FFFFFF",
+    "abbrev": "TENN"
+  },
+  "alabama-2026": {
+    "primary": "#9E1B32",
+    "secondary": "#FFFFFF",
+    "abbrev": "BAMA"
+  },
+  "arkansas-2026": {
+    "primary": "#9D2235",
+    "secondary": "#FFFFFF",
+    "abbrev": "ARK"
+  },
+  "kentucky-2026": {
+    "primary": "#0033A0",
+    "secondary": "#FFFFFF",
+    "abbrev": "UK"
+  },
+  "iowa-2026": {
+    "primary": "#000000",
+    "secondary": "#FFCD00",
+    "abbrev": "IOWA"
+  },
+  "byu-2026": {
+    "primary": "#002E5D",
+    "secondary": "#FFFFFF",
+    "abbrev": "BYU"
+  },
+  "clemson-2026": {
+    "primary": "#F56600",
+    "secondary": "#522D80",
+    "abbrev": "CLEM"
+  },
+  "villanova-2026": {
+    "primary": "#003366",
+    "secondary": "#FFFFFF",
+    "abbrev": "NOVA"
+  },
+  "nc-state-2026": {
+    "primary": "#CC0000",
+    "secondary": "#FFFFFF",
+    "abbrev": "NCST"
+  },
+  "auburn-2026": {
+    "primary": "#0C2340",
+    "secondary": "#E87722",
+    "abbrev": "AUB"
+  },
+  "ucf-2026": {
+    "primary": "#000000",
+    "secondary": "#BA9B37",
+    "abbrev": "UCF"
+  },
+  "texas-am-2026": {
+    "primary": "#500000",
+    "secondary": "#FFFFFF",
+    "abbrev": "TAMU"
+  },
+  "utah-state-2026": {
+    "primary": "#0F2439",
+    "secondary": "#FFFFFF",
+    "abbrev": "USU"
+  },
+  "wisconsin-2026": {
+    "primary": "#C5050C",
+    "secondary": "#FFFFFF",
+    "abbrev": "WISC"
+  },
+  "smu-2026": {
+    "primary": "#CC0035",
+    "secondary": "#0033A0",
+    "abbrev": "SMU"
+  },
+  "georgia-2026": {
+    "primary": "#BA0C2F",
+    "secondary": "#000000",
+    "abbrev": "UGA"
+  },
+  "indiana-2026": {
+    "primary": "#990000",
+    "secondary": "#EEEDEB",
+    "abbrev": "IU"
+  },
+  "usc-2026": {
+    "primary": "#990000",
+    "secondary": "#FFC72C",
+    "abbrev": "USC"
+  },
+  "st-marys-2026": {
+    "primary": "#D0202E",
+    "secondary": "#003DA5",
+    "abbrev": "SMC"
+  },
+  "ucla-2026": {
+    "primary": "#2D68C4",
+    "secondary": "#F2A900",
+    "abbrev": "UCLA"
+  },
+  "miami-fl-2026": {
+    "primary": "#F47321",
+    "secondary": "#005030",
+    "abbrev": "MIA"
+  },
+  "ohio-state-2026": {
+    "primary": "#BB0000",
+    "secondary": "#666666",
+    "abbrev": "OSU"
+  },
+  "texas-2026": {
+    "primary": "#BF5700",
+    "secondary": "#FFFFFF",
+    "abbrev": "TEX"
+  },
+  "santa-clara-2026": {
+    "primary": "#AA1F2E",
+    "secondary": "#FFFFFF",
+    "abbrev": "SCU"
+  },
+  "san-diego-state-2026": {
+    "primary": "#A6192E",
+    "secondary": "#000000",
+    "abbrev": "SDSU"
+  },
+  "saint-louis-2026": {
+    "primary": "#003DA5",
+    "secondary": "#FFFFFF",
+    "abbrev": "SLU"
+  },
+  "tulsa-2026": {
+    "primary": "#002D62",
+    "secondary": "#C89A17",
+    "abbrev": "TLSA"
+  },
+  "belmont-2026": {
+    "primary": "#002B5C",
+    "secondary": "#C41230",
+    "abbrev": "BEL"
+  },
+  "liberty-2026": {
+    "primary": "#002D62",
+    "secondary": "#C41230",
+    "abbrev": "LIB"
+  },
+  "yale-2026": {
+    "primary": "#00356B",
+    "secondary": "#FFFFFF",
+    "abbrev": "YALE"
+  },
+  "stephen-f-austin-2026": {
+    "primary": "#3E2680",
+    "secondary": "#E31837",
+    "abbrev": "SFA"
+  },
+  "high-point-2026": {
+    "primary": "#330072",
+    "secondary": "#FFFFFF",
+    "abbrev": "HPU"
+  },
+  "utah-valley-2026": {
+    "primary": "#275D38",
+    "secondary": "#FFFFFF",
+    "abbrev": "UVU"
+  },
+  "unc-wilmington-2026": {
+    "primary": "#006666",
+    "secondary": "#FFD700",
+    "abbrev": "UNCW"
+  },
+  "hawaii-2026": {
+    "primary": "#024731",
+    "secondary": "#000000",
+    "abbrev": "HAW"
+  },
+  "north-dakota-state-2026": {
+    "primary": "#006A32",
+    "secondary": "#FFC72C",
+    "abbrev": "NDSU"
+  },
+  "troy-2026": {
+    "primary": "#8B2332",
+    "secondary": "#000000",
+    "abbrev": "TROY"
+  },
+  "east-tennessee-state-2026": {
+    "primary": "#041E42",
+    "secondary": "#FFC72C",
+    "abbrev": "ETSU"
+  },
+  "portland-state-2026": {
+    "primary": "#154734",
+    "secondary": "#FFFFFF",
+    "abbrev": "PSU"
+  },
+  "wright-state-2026": {
+    "primary": "#007A33",
+    "secondary": "#CFB53B",
+    "abbrev": "WSU"
+  },
+  "austin-peay-2026": {
+    "primary": "#C41230",
+    "secondary": "#FFFFFF",
+    "abbrev": "APSU"
+  },
+  "navy-2026": {
+    "primary": "#00205B",
+    "secondary": "#C5B783",
+    "abbrev": "NAVY"
+  },
+  "ut-martin-2026": {
+    "primary": "#FF6600",
+    "secondary": "#002D62",
+    "abbrev": "UTM"
+  },
+  "merrimack-2026": {
+    "primary": "#003B6F",
+    "secondary": "#F0AB00",
+    "abbrev": "MERR"
+  },
+  "liu-2026": {
+    "primary": "#005DAA",
+    "secondary": "#FFC72C",
+    "abbrev": "LIU"
+  },
+  "bethune-cookman-2026": {
+    "primary": "#660000",
+    "secondary": "#FFD700",
+    "abbrev": "BCU"
+  },
+  "virginia-2026": {
+    "primary": "#232D4B",
+    "secondary": "#F84C1E",
+    "abbrev": "UVA"
+  },
+  "umbc-2026": {
+    "primary": "#000000",
+    "secondary": "#F7B538",
+    "abbrev": "UMBC"
+  },
+  "morgan-state-2026": {
+    "primary": "#003DA5",
+    "secondary": "#F47920",
+    "abbrev": "MORG"
+  },
+  "miami-oh-2026": {
+    "primary": "#C41230",
+    "secondary": "#FFFFFF",
+    "abbrev": "MIOH"
+  }
+}

@@ -1,0 +1,614 @@
+{
+  "Michigan Wolverines": {
+    "name": "Dusty May",
+    "tournamentWins": 7,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 1,
+    "championships": 0,
+    "yearsExperience": 7,
+    "seedOverperformance": 1.5
+  },
+  "Duke Blue Devils": {
+    "name": "Jon Scheyer",
+    "tournamentWins": 10,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 5,
+    "seedOverperformance": 0.4
+  },
+  "Arizona Wildcats": {
+    "name": "Tommy Lloyd",
+    "tournamentWins": 8,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 5,
+    "seedOverperformance": 0.6
+  },
+  "UConn Huskies": {
+    "name": "Dan Hurley",
+    "tournamentWins": 18,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 2,
+    "championships": 2,
+    "yearsExperience": 9,
+    "seedOverperformance": 2.3
+  },
+  "Houston Cougars": {
+    "name": "Kelvin Sampson",
+    "tournamentWins": 24,
+    "tournamentLosses": 9,
+    "finalFourAppearances": 2,
+    "championships": 0,
+    "yearsExperience": 16,
+    "seedOverperformance": 1.3
+  },
+  "Iowa State Cyclones": {
+    "name": "T.J. Otzelberger",
+    "tournamentWins": 8,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 7,
+    "seedOverperformance": 1.1
+  },
+  "Illinois Fighting Illini": {
+    "name": "Brad Underwood",
+    "tournamentWins": 8,
+    "tournamentLosses": 5,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 11,
+    "seedOverperformance": 0.3
+  },
+  "Nebraska Cornhuskers": {
+    "name": "Fred Hoiberg",
+    "tournamentWins": 3,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 10,
+    "seedOverperformance": 0.5
+  },
+  "Kansas Jayhawks": {
+    "name": "Bill Self",
+    "tournamentWins": 57,
+    "tournamentLosses": 23,
+    "finalFourAppearances": 4,
+    "championships": 2,
+    "yearsExperience": 27,
+    "seedOverperformance": 0.9
+  },
+  "Michigan State Spartans": {
+    "name": "Tom Izzo",
+    "tournamentWins": 56,
+    "tournamentLosses": 25,
+    "finalFourAppearances": 8,
+    "championships": 2,
+    "yearsExperience": 31,
+    "seedOverperformance": 1.8
+  },
+  "Purdue Boilermakers": {
+    "name": "Matt Painter",
+    "tournamentWins": 20,
+    "tournamentLosses": 13,
+    "finalFourAppearances": 2,
+    "championships": 0,
+    "yearsExperience": 21,
+    "seedOverperformance": 0.5
+  },
+  "Florida Gators": {
+    "name": "Todd Golden",
+    "tournamentWins": 6,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 6,
+    "seedOverperformance": 0.7
+  },
+  "Gonzaga Bulldogs": {
+    "name": "Mark Few",
+    "tournamentWins": 38,
+    "tournamentLosses": 15,
+    "finalFourAppearances": 2,
+    "championships": 0,
+    "yearsExperience": 27,
+    "seedOverperformance": 1.3
+  },
+  "Texas Tech Red Raiders": {
+    "name": "Grant McCasland",
+    "tournamentWins": 5,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 8,
+    "seedOverperformance": 0.4
+  },
+  "North Carolina Tar Heels": {
+    "name": "Hubert Davis",
+    "tournamentWins": 14,
+    "tournamentLosses": 5,
+    "finalFourAppearances": 1,
+    "championships": 0,
+    "yearsExperience": 6,
+    "seedOverperformance": 1.6
+  },
+  "Vanderbilt Commodores": {
+    "name": "Mark Byington",
+    "tournamentWins": 3,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 11,
+    "seedOverperformance": 0.2
+  },
+  "St. John's Red Storm": {
+    "name": "Rick Pitino",
+    "tournamentWins": 42,
+    "tournamentLosses": 17,
+    "finalFourAppearances": 7,
+    "championships": 2,
+    "yearsExperience": 36,
+    "seedOverperformance": 1.5
+  },
+  "Louisville Cardinals": {
+    "name": "Pat Kelsey",
+    "tournamentWins": 2,
+    "tournamentLosses": 2,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 4,
+    "seedOverperformance": 0.3
+  },
+  "Tennessee Volunteers": {
+    "name": "Rick Barnes",
+    "tournamentWins": 21,
+    "tournamentLosses": 15,
+    "finalFourAppearances": 1,
+    "championships": 0,
+    "yearsExperience": 29,
+    "seedOverperformance": 0.4
+  },
+  "Alabama Crimson Tide": {
+    "name": "Nate Oats",
+    "tournamentWins": 12,
+    "tournamentLosses": 6,
+    "finalFourAppearances": 1,
+    "championships": 0,
+    "yearsExperience": 9,
+    "seedOverperformance": 0.8
+  },
+  "Arkansas Razorbacks": {
+    "name": "John Calipari",
+    "tournamentWins": 44,
+    "tournamentLosses": 17,
+    "finalFourAppearances": 6,
+    "championships": 1,
+    "yearsExperience": 29,
+    "seedOverperformance": 1.1
+  },
+  "Kentucky Wildcats": {
+    "name": "Mark Pope",
+    "tournamentWins": 4,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 6,
+    "seedOverperformance": 0.5
+  },
+  "Virginia Cavaliers": {
+    "name": "Tony Bennett",
+    "tournamentWins": 25,
+    "tournamentLosses": 10,
+    "finalFourAppearances": 1,
+    "championships": 1,
+    "yearsExperience": 17,
+    "seedOverperformance": 0.8
+  },
+  "Saint Louis Billikens": {
+    "name": "Josh Schertz",
+    "tournamentWins": 2,
+    "tournamentLosses": 2,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 7,
+    "seedOverperformance": 0.4
+  },
+  "Iowa Hawkeyes": {
+    "name": "Fran McCaffery",
+    "tournamentWins": 8,
+    "tournamentLosses": 8,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 18,
+    "seedOverperformance": 0.1
+  },
+  "BYU Cougars": {
+    "name": "Kevin Young",
+    "tournamentWins": 3,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 4,
+    "seedOverperformance": 0.2
+  },
+  "Clemson Tigers": {
+    "name": "Brad Brownell",
+    "tournamentWins": 7,
+    "tournamentLosses": 6,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 17,
+    "seedOverperformance": 0.3
+  },
+  "Auburn Tigers": {
+    "name": "Bruce Pearl",
+    "tournamentWins": 15,
+    "tournamentLosses": 8,
+    "finalFourAppearances": 1,
+    "championships": 0,
+    "yearsExperience": 19,
+    "seedOverperformance": 0.9
+  },
+  "Villanova Wildcats": {
+    "name": "Kyle Neptune",
+    "tournamentWins": 3,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 4,
+    "seedOverperformance": 0.0
+  },
+  "NC State Wolfpack": {
+    "name": "Kevin Keatts",
+    "tournamentWins": 6,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 1,
+    "championships": 0,
+    "yearsExperience": 9,
+    "seedOverperformance": 1.5
+  },
+  "Wisconsin Badgers": {
+    "name": "Greg Gard",
+    "tournamentWins": 14,
+    "tournamentLosses": 8,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 10,
+    "seedOverperformance": 0.5
+  },
+  "Texas A&M Aggies": {
+    "name": "Buzz Williams",
+    "tournamentWins": 12,
+    "tournamentLosses": 9,
+    "finalFourAppearances": 1,
+    "championships": 0,
+    "yearsExperience": 16,
+    "seedOverperformance": 0.6
+  },
+  "Indiana Hoosiers": {
+    "name": "Mike Woodson",
+    "tournamentWins": 4,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 6,
+    "seedOverperformance": 0.0
+  },
+  "UCF Knights": {
+    "name": "Johnny Dawkins",
+    "tournamentWins": 5,
+    "tournamentLosses": 5,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 17,
+    "seedOverperformance": 0.1
+  },
+  "Utah State Aggies": {
+    "name": "Jerrod Calhoun",
+    "tournamentWins": 3,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 9,
+    "seedOverperformance": 0.3
+  },
+  "SMU Mustangs": {
+    "name": "Andy Enfield",
+    "tournamentWins": 10,
+    "tournamentLosses": 7,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 13,
+    "seedOverperformance": 0.8
+  },
+  "Georgia Bulldogs": {
+    "name": "Mike White",
+    "tournamentWins": 8,
+    "tournamentLosses": 7,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 12,
+    "seedOverperformance": 0.2
+  },
+  "USC Trojans": {
+    "name": "Eric Musselman",
+    "tournamentWins": 14,
+    "tournamentLosses": 6,
+    "finalFourAppearances": 1,
+    "championships": 0,
+    "yearsExperience": 10,
+    "seedOverperformance": 1.0
+  },
+  "UCLA Bruins": {
+    "name": "Mick Cronin",
+    "tournamentWins": 12,
+    "tournamentLosses": 8,
+    "finalFourAppearances": 1,
+    "championships": 0,
+    "yearsExperience": 18,
+    "seedOverperformance": 0.6
+  },
+  "St. Mary's Gaels": {
+    "name": "Randy Bennett",
+    "tournamentWins": 8,
+    "tournamentLosses": 8,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 25,
+    "seedOverperformance": 0.4
+  },
+  "Miami FL Hurricanes": {
+    "name": "Jim Larrañaga",
+    "tournamentWins": 18,
+    "tournamentLosses": 10,
+    "finalFourAppearances": 2,
+    "championships": 0,
+    "yearsExperience": 28,
+    "seedOverperformance": 1.2
+  },
+  "Ohio State Buckeyes": {
+    "name": "Jake Diebler",
+    "tournamentWins": 3,
+    "tournamentLosses": 2,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 3,
+    "seedOverperformance": 0.3
+  },
+  "San Diego State Aztecs": {
+    "name": "Brian Dutcher",
+    "tournamentWins": 12,
+    "tournamentLosses": 5,
+    "finalFourAppearances": 1,
+    "championships": 0,
+    "yearsExperience": 9,
+    "seedOverperformance": 1.5
+  },
+  "Texas Longhorns": {
+    "name": "Rodney Terry",
+    "tournamentWins": 5,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 6,
+    "seedOverperformance": 0.3
+  },
+  "Santa Clara Broncos": {
+    "name": "Herb Sendek",
+    "tournamentWins": 10,
+    "tournamentLosses": 9,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 28,
+    "seedOverperformance": 0.1
+  },
+  "Miami OH RedHawks": {
+    "name": "Travis Steele",
+    "tournamentWins": 2,
+    "tournamentLosses": 2,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 7,
+    "seedOverperformance": 0.3
+  },
+  "Tulsa": {
+    "name": "Eric Konkol",
+    "tournamentWins": 2,
+    "tournamentLosses": 2,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 10,
+    "seedOverperformance": 0.2
+  },
+  "Belmont Bruins": {
+    "name": "Casey Alexander",
+    "tournamentWins": 3,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 8,
+    "seedOverperformance": 0.4
+  },
+  "Liberty Flames": {
+    "name": "Ritchie McKay",
+    "tournamentWins": 3,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 19,
+    "seedOverperformance": 0.2
+  },
+  "Yale Bulldogs": {
+    "name": "James Jones",
+    "tournamentWins": 4,
+    "tournamentLosses": 5,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 13,
+    "seedOverperformance": 0.8
+  },
+  "Stephen F. Austin Lumberjacks": {
+    "name": "Kyle Keller",
+    "tournamentWins": 3,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 8,
+    "seedOverperformance": 0.3
+  },
+  "High Point Panthers": {
+    "name": "Tubby Smith",
+    "tournamentWins": 20,
+    "tournamentLosses": 15,
+    "finalFourAppearances": 1,
+    "championships": 1,
+    "yearsExperience": 31,
+    "seedOverperformance": 0.3
+  },
+  "Utah Valley Wolverines": {
+    "name": "Mark Madsen",
+    "tournamentWins": 1,
+    "tournamentLosses": 2,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 4,
+    "seedOverperformance": 0.1
+  },
+  "UNC Wilmington Seahawks": {
+    "name": "Takayo Siddle",
+    "tournamentWins": 2,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 7,
+    "seedOverperformance": 0.1
+  },
+  "Hawaii Rainbow Warriors": {
+    "name": "Eran Ganot",
+    "tournamentWins": 2,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 11,
+    "seedOverperformance": 0.1
+  },
+  "North Dakota State Bison": {
+    "name": "David Richman",
+    "tournamentWins": 2,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 10,
+    "seedOverperformance": 0.2
+  },
+  "Troy Trojans": {
+    "name": "Scott Cross",
+    "tournamentWins": 2,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 15,
+    "seedOverperformance": 0.1
+  },
+  "East Tennessee State Buccaneers": {
+    "name": "Desmond Oliver",
+    "tournamentWins": 2,
+    "tournamentLosses": 2,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 5,
+    "seedOverperformance": 0.2
+  },
+  "Portland State Vikings": {
+    "name": "Jase Coburn",
+    "tournamentWins": 1,
+    "tournamentLosses": 2,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 4,
+    "seedOverperformance": 0.0
+  },
+  "Wright State Raiders": {
+    "name": "Clint Sargent",
+    "tournamentWins": 2,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 6,
+    "seedOverperformance": 0.1
+  },
+  "Austin Peay Governors": {
+    "name": "Nate James",
+    "tournamentWins": 3,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 5,
+    "seedOverperformance": 0.3
+  },
+  "Navy Midshipmen": {
+    "name": "Ed DeChellis",
+    "tournamentWins": 4,
+    "tournamentLosses": 6,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 20,
+    "seedOverperformance": 0.1
+  },
+  "UT Martin Skyhawks": {
+    "name": "Ryan Ridder",
+    "tournamentWins": 1,
+    "tournamentLosses": 2,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 5,
+    "seedOverperformance": 0.0
+  },
+  "Merrimack Warriors": {
+    "name": "Joe Gallo",
+    "tournamentWins": 1,
+    "tournamentLosses": 2,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 4,
+    "seedOverperformance": 0.0
+  },
+  "LIU Sharks": {
+    "name": "Rod Strickland",
+    "tournamentWins": 1,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 4,
+    "seedOverperformance": -0.1
+  },
+  "Bethune-Cookman Wildcats": {
+    "name": "Reggie Theus",
+    "tournamentWins": 2,
+    "tournamentLosses": 4,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 8,
+    "seedOverperformance": -0.1
+  },
+  "UMBC Retrievers": {
+    "name": "Jim Ferry",
+    "tournamentWins": 2,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 10,
+    "seedOverperformance": 0.3
+  },
+  "Morgan State Bears": {
+    "name": "Kevin Broadus",
+    "tournamentWins": 1,
+    "tournamentLosses": 3,
+    "finalFourAppearances": 0,
+    "championships": 0,
+    "yearsExperience": 12,
+    "seedOverperformance": -0.1
+  }
+}
