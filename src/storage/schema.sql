@@ -107,3 +107,16 @@ CREATE TABLE IF NOT EXISTS prediction_log (
 
 CREATE INDEX IF NOT EXISTS idx_prediction_log_mode ON prediction_log(mode_id, year);
 CREATE INDEX IF NOT EXISTS idx_prediction_log_game ON prediction_log(game_id);
+
+-- User feedback submissions
+CREATE TABLE IF NOT EXISTS feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  type TEXT NOT NULL,
+  message TEXT NOT NULL,
+  mode_id TEXT,
+  view TEXT,
+  user_agent TEXT,
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_time ON feedback(created_at);

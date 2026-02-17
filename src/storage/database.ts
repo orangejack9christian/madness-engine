@@ -274,3 +274,33 @@ export function getPredictionLogs(
     WHERE mode_id = ? AND year = ? AND tournament_type = ? AND actual_winner_id IS NOT NULL
   `).all(modeId, year, tournamentType) as any[];
 }
+
+// === Feedback Operations ===
+
+export function insertFeedback(
+  type: string,
+  message: string,
+  modeId: string | null,
+  view: string | null,
+  userAgent: string | null,
+): void {
+  const database = getDatabase();
+  database.prepare(`
+    INSERT INTO feedback (type, message, mode_id, view, user_agent, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(type, message, modeId, view, userAgent, Date.now());
+}
+
+export function getFeedbackEntries(limit: number = 50): Array<{
+  id: number;
+  type: string;
+  message: string;
+  mode_id: string | null;
+  view: string | null;
+  created_at: number;
+}> {
+  const database = getDatabase();
+  return database.prepare(
+    'SELECT id, type, message, mode_id, view, created_at FROM feedback ORDER BY created_at DESC LIMIT ?'
+  ).all(limit) as any[];
+}

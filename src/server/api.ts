@@ -11,7 +11,7 @@ import { buildBracket } from '../bracket/bracket-builder';
 import { runBracketSimulationSync } from '../engine/simulator';
 import { aggregateBracketResults } from '../engine/bracket-propagator';
 import { generateReport } from '../output/report-generator';
-import { upsertTeams, upsertTeamAdvancements, getTeamAdvancements } from '../storage/database';
+import { upsertTeams, upsertTeamAdvancements, getTeamAdvancements, insertFeedback, getFeedbackEntries } from '../storage/database';
 import { getModeIds, getMode, getAllModes, hasMode } from '../modes/registry';
 import { ModeBlender } from '../modes/mode-blender';
 import { GameStateTracker } from '../ingestion/game-state-tracker';
@@ -362,6 +362,44 @@ app.post('/api/whatif/:type/:modeId', (req, res) => {
       volatilityIndex: result.volatilityIndex,
       lockedResults: lockedResults || [],
     });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// === Feedback Endpoints ===
+
+app.post('/api/feedback', (req, res) => {
+  try {
+    const { type, message, mode, view, userAgent } = req.body;
+
+    if (!type || !message) {
+      res.status(400).json({ error: 'Type and message are required' });
+      return;
+    }
+
+    const validTypes = ['bug', 'suggestion', 'other'];
+    if (!validTypes.includes(type)) {
+      res.status(400).json({ error: 'Invalid feedback type' });
+      return;
+    }
+
+    if (typeof message !== 'string' || message.length > 5000) {
+      res.status(400).json({ error: 'Message must be a string under 5000 characters' });
+      return;
+    }
+
+    insertFeedback(type, message.trim(), mode || null, view || null, userAgent || null);
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/feedback', (_req, res) => {
+  try {
+    const entries = getFeedbackEntries(100);
+    res.json(entries);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }

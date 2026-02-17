@@ -26,9 +26,6 @@ let tableSortDirection = 'asc';
 let pickSelections = {};
 let teamColors = {};
 
-// ─── Feedback Config ─────────────────────────────────
-const FEEDBACK_EMAIL = 'orangejack9.christian@gmail.com';
-
 // ─── Region Colors ───────────────────────────────────
 const REGION_COLORS = {
   east: '#8b5cf6',
@@ -2960,34 +2957,46 @@ function setupFeedbackPanel() {
     });
   });
 
-  // Send via mailto
+  // Send feedback to server
   if (sendBtn) {
-    sendBtn.addEventListener('click', () => {
+    sendBtn.addEventListener('click', async () => {
       const message = textarea ? textarea.value.trim() : '';
       if (!message) {
         showToast('Please enter a message', 'warning');
         return;
       }
 
-      const typeLabel = feedbackType === 'bug' ? 'Bug Report' : feedbackType === 'suggestion' ? 'Suggestion' : 'Feedback';
-      const subject = encodeURIComponent('[MadnessEngine] ' + typeLabel);
-      const body = encodeURIComponent(
-        typeLabel + '\n' +
-        '─────────────────\n\n' +
-        message + '\n\n' +
-        '─────────────────\n' +
-        'Mode: ' + (currentMode || 'none') + '\n' +
-        'View: ' + currentView + '\n' +
-        'URL: ' + window.location.href + '\n' +
-        'User Agent: ' + navigator.userAgent
-      );
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending...';
 
-      window.open('mailto:' + FEEDBACK_EMAIL + '?subject=' + subject + '&body=' + body, '_self');
-      trackEvent('feedback_send', { type: feedbackType });
+      try {
+        const res = await fetch(API_BASE + '/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: feedbackType,
+            message: message,
+            mode: currentMode || null,
+            view: currentView,
+            userAgent: navigator.userAgent
+          })
+        });
 
-      if (textarea) textarea.value = '';
-      panel.classList.remove('open');
-      showToast('Opening email client...', 'success');
+        if (res.ok) {
+          trackEvent('feedback_send', { type: feedbackType });
+          if (textarea) textarea.value = '';
+          panel.classList.remove('open');
+          showToast('Feedback submitted — thank you!', 'success');
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.error || 'Failed to send feedback', 'warning');
+        }
+      } catch (e) {
+        showToast('Failed to send feedback — please try again', 'warning');
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Send Feedback';
+      }
     });
   }
 
