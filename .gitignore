@@ -9,8 +9,8 @@ dist/
 *.db-shm
 *.db-wal
 
-# Simulation output cache
-output/
+# Simulation output cache (root only, not src/output)
+/output/
 
 # OS files
 .DS_Store
