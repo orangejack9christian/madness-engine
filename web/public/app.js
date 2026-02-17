@@ -99,6 +99,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupFeedbackPanel();
   setupModeExplainer();
   setupChallenge();
+  setupThemeToggle();
+  setupHamburgerMenu();
 
   await loadTeamColors();
   await loadModes();
@@ -973,6 +975,14 @@ function showTeamDetail(teamId) {
     '</div>';
   }
 
+  // ── Section 6: Radar Chart ──
+  var radarHtml = '<div class="td-section">' +
+    '<h3 class="td-section-title">Performance Profile</h3>' +
+    '<div class="team-detail-chart-container" style="height:220px;background:var(--bg-card);border-radius:10px;padding:0.75rem;">' +
+      '<canvas id="td-radar-canvas"></canvas>' +
+    '</div>' +
+  '</div>';
+
   // ── Assemble panel HTML ──
   var closeHtml = '<div class="team-detail-header" style="position:sticky;top:0;z-index:5;background:var(--bg-secondary);padding:0.75rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">' +
     '<span style="font-weight:700;font-size:0.85rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;">Team Details</span>' +
@@ -985,6 +995,7 @@ function showTeamDetail(teamId) {
     '<div class="team-detail-body">' +
       headerHtml +
       funnelHtml +
+      radarHtml +
       statsHtml +
       coachHtml +
       mascotHtml +
@@ -992,6 +1003,12 @@ function showTeamDetail(teamId) {
 
   // Show panel
   panel.style.display = 'block';
+
+  // Render radar chart
+  var radarCanvas = document.getElementById('td-radar-canvas');
+  if (radarCanvas && typeof Chart !== 'undefined') {
+    createTeamRadarChart(radarCanvas.getContext('2d'), team);
+  }
 
   // Close button handler
   var closeBtn = document.getElementById('team-detail-close');
@@ -3294,4 +3311,87 @@ async function loadAccuracy() {
   } catch (e) {
     // silently fail
   }
+}
+
+
+// ═══════════════════════════════════════════════════════
+// SECTION 18: THEME TOGGLE (DARK/LIGHT)
+// ═══════════════════════════════════════════════════════
+
+function setupThemeToggle() {
+  var btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+
+  // Restore saved theme
+  var saved = localStorage.getItem('madness-theme');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+
+  btn.addEventListener('click', function() {
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('madness-theme', next);
+    trackEvent('theme_toggle', { theme: next });
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════
+// SECTION 19: MOBILE HAMBURGER MENU
+// ═══════════════════════════════════════════════════════
+
+function setupHamburgerMenu() {
+  var btn = document.getElementById('hamburger-btn');
+  var navTabs = document.querySelector('.nav-tabs-container');
+  if (!btn || !navTabs) return;
+
+  btn.addEventListener('click', function() {
+    btn.classList.toggle('active');
+    navTabs.classList.toggle('mobile-open');
+  });
+
+  // Close menu when a nav tab is clicked
+  navTabs.querySelectorAll('.nav-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      btn.classList.remove('active');
+      navTabs.classList.remove('mobile-open');
+    });
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════
+// SECTION 20: SKELETON LOADING HELPERS
+// ═══════════════════════════════════════════════════════
+
+function showSkeletonLoading(containerId, count) {
+  count = count || 4;
+  var container = document.getElementById(containerId);
+  if (!container) return;
+
+  var html = '';
+  for (var i = 0; i < count; i++) {
+    html += '<div class="skeleton skeleton-card" style="margin-bottom:0.75rem;"></div>';
+  }
+  container.innerHTML = html;
+}
+
+function showTableSkeleton(tbodyId, cols, rows) {
+  cols = cols || 9;
+  rows = rows || 10;
+  var tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+
+  var html = '';
+  for (var r = 0; r < rows; r++) {
+    html += '<tr>';
+    for (var c = 0; c < cols; c++) {
+      var w = c === 1 ? 'w-75' : 'w-50';
+      html += '<td><div class="skeleton skeleton-line ' + w + '"></div></td>';
+    }
+    html += '</tr>';
+  }
+  tbody.innerHTML = html;
 }

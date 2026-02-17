@@ -57,6 +57,51 @@
   --transition-normal: 0.25s ease;
 }
 
+/* ── Light Theme ── */
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-elevated: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-muted: #94a3b8;
+  --border: rgba(15, 23, 42, 0.08);
+  --border-light: rgba(15, 23, 42, 0.12);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.06);
+}
+
+[data-theme="light"] .top-nav {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .mode-bar {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="light"] .brand-text {
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .data-table thead {
+  background: #f1f5f9;
+}
+
+[data-theme="light"] .pick-team:hover {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+[data-theme="light"] .pick-team.pick-selected {
+  background: rgba(59, 130, 246, 0.1);
+}
+
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 14px; scroll-behavior: smooth; }
@@ -2934,3 +2979,190 @@ input:focus:not(:focus-visible) {
 .font-mono { font-family: 'JetBrains Mono', monospace; }
 .hidden { display: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+/* ══════════════════════════════════════════════════
+   THEME TOGGLE BUTTON
+   ══════════════════════════════════════════════════ */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+.theme-toggle:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.06);
+  border-color: var(--border-light);
+}
+[data-theme="light"] .theme-toggle:hover {
+  background: rgba(0,0,0,0.04);
+}
+.theme-icon-light { display: none; }
+[data-theme="light"] .theme-icon-dark { display: none; }
+[data-theme="light"] .theme-icon-light { display: block; }
+
+/* ══════════════════════════════════════════════════
+   HAMBURGER MENU BUTTON
+   ══════════════════════════════════════════════════ */
+.hamburger-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  padding: 8px;
+  flex-shrink: 0;
+}
+.hamburger-btn span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text-secondary);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+.hamburger-btn.active span:nth-child(1) {
+  transform: rotate(45deg) translate(4px, 4px);
+}
+.hamburger-btn.active span:nth-child(2) {
+  opacity: 0;
+}
+.hamburger-btn.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(4px, -4px);
+}
+
+@media (max-width: 768px) {
+  .hamburger-btn { display: flex; }
+
+  .nav-tabs-container {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.25rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .nav-tabs-container.mobile-open {
+    display: flex;
+  }
+
+  .nav-tabs-container.mobile-open .nav-tab {
+    justify-content: flex-start;
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+  }
+
+  .nav-tabs-container.mobile-open .nav-tab span {
+    display: inline;
+  }
+
+  .sim-counter { display: none; }
+}
+
+/* ══════════════════════════════════════════════════
+   SKELETON LOADING PLACEHOLDERS
+   ══════════════════════════════════════════════════ */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-card);
+  border-radius: 8px;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+  animation: skeleton-shimmer 1.5s ease infinite;
+}
+@keyframes skeleton-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+[data-theme="light"] .skeleton::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.04) 50%, transparent 100%);
+}
+.skeleton-line {
+  height: 14px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+.skeleton-line.w-75 { width: 75%; }
+.skeleton-line.w-50 { width: 50%; }
+.skeleton-line.w-100 { width: 100%; }
+.skeleton-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+.skeleton-card {
+  height: 120px;
+  border-radius: 12px;
+}
+
+/* ══════════════════════════════════════════════════
+   HOVER MICRO-INTERACTIONS
+   ══════════════════════════════════════════════════ */
+.card {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.data-table tbody tr {
+  transition: background var(--transition-fast);
+  border-left: 3px solid transparent;
+}
+.data-table tbody tr:hover {
+  border-left-color: var(--accent);
+}
+
+.mode-tab {
+  transition: all var(--transition-fast);
+}
+.mode-tab:hover {
+  transform: scale(1.02);
+}
+
+.region-card {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.region-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.pick-matchup {
+  transition: transform var(--transition-fast);
+}
+.pick-matchup:hover {
+  transform: scale(1.01);
+}
+
+/* ══════════════════════════════════════════════════
+   SMOOTH VIEW TRANSITIONS
+   ══════════════════════════════════════════════════ */
+.view-section {
+  transition: opacity 0.3s ease;
+}
