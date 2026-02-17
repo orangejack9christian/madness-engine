@@ -4,7 +4,7 @@
   "description": "Real-time probabilistic March Madness tournament simulator",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"require('fs').copyFileSync('src/storage/schema.sql','dist/storage/schema.sql')\"",
     "start": "node dist/server/index.js",
     "start:cli": "node dist/index.js",
     "dev": "tsx src/index.ts",
