@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupBracketToolbar();
   setupFeedbackPanel();
   setupModeExplainer();
+  setupChallenge();
 
   await loadTeamColors();
   await loadModes();
@@ -169,6 +170,12 @@ function switchView(viewName, pushState = true) {
   if (viewName === 'picks') {
     initPickSheet();
   }
+  if (viewName === 'challenge') {
+    loadLeaderboard();
+  }
+  if (viewName === 'accuracy') {
+    loadAccuracy();
+  }
 }
 
 // Handle browser back/forward navigation
@@ -179,7 +186,7 @@ window.addEventListener('popstate', (event) => {
 
 function getViewFromHash() {
   const hash = location.hash.replace('#', '');
-  const validViews = ['dashboard', 'bracket', 'teams', 'h2h', 'picks'];
+  const validViews = ['dashboard', 'bracket', 'teams', 'h2h', 'picks', 'challenge', 'accuracy'];
   return validViews.includes(hash) ? hash : null;
 }
 
@@ -3113,4 +3120,178 @@ function renderModeExplainer() {
       }
     });
   });
+}
+
+
+// ═══════════════════════════════════════════════════════
+// SECTION 17: BRACKET CHALLENGE
+// ═══════════════════════════════════════════════════════
+
+function setupChallenge() {
+  const submitBtn = document.getElementById('btn-submit-challenge');
+  if (!submitBtn) return;
+
+  submitBtn.addEventListener('click', async () => {
+    const nameInput = document.getElementById('challenge-name');
+    const statusEl = document.getElementById('challenge-status');
+    const displayName = nameInput ? nameInput.value.trim() : '';
+
+    if (!displayName) {
+      showToast('Please enter a display name', 'warning');
+      if (nameInput) nameInput.focus();
+      return;
+    }
+
+    const picks = Object.assign({}, pickSelections);
+    if (Object.keys(picks).length === 0) {
+      showToast('Make some picks on the Pick Sheet tab first', 'warning');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    try {
+      const res = await fetch(API_BASE + '/api/challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          displayName: displayName,
+          picks: picks,
+          tournamentType: currentType,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        trackEvent('challenge_submit', { picks: Object.keys(picks).length });
+        if (statusEl) statusEl.textContent = 'Bracket saved! ID: ' + data.id;
+        showToast('Bracket submitted to the leaderboard!', 'success');
+        loadLeaderboard();
+      } else {
+        const err = await res.json().catch(function() { return {}; });
+        showToast(err.error || 'Failed to submit bracket', 'warning');
+      }
+    } catch (e) {
+      showToast('Failed to submit bracket', 'warning');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit My Bracket';
+    }
+  });
+}
+
+async function loadLeaderboard() {
+  const tbody = document.getElementById('leaderboard-tbody');
+  if (!tbody) return;
+
+  try {
+    const res = await fetch(API_BASE + '/api/leaderboard/' + currentType);
+    if (!res.ok) return;
+    const entries = await res.json();
+
+    if (!entries || entries.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);padding:2rem;">No entries yet. Be the first to submit your bracket!</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = entries.map(function(entry, idx) {
+      var rank = idx + 1;
+      var medal = rank === 1 ? ' style="color:#fbbf24;font-weight:800;"' : rank === 2 ? ' style="color:#94a3b8;font-weight:700;"' : rank === 3 ? ' style="color:#cd7f32;font-weight:700;"' : '';
+      var scoreDisplay = entry.score !== null ? entry.score.toFixed(1) + '%' : '--';
+      var dateStr = new Date(entry.createdAt).toLocaleDateString();
+      return '<tr>' +
+        '<td' + medal + '>' + rank + '</td>' +
+        '<td style="font-weight:600;">' + entry.displayName + '</td>' +
+        '<td style="font-family:JetBrains Mono,monospace;font-weight:600;">' + scoreDisplay + '</td>' +
+        '<td>' + entry.correctPicks + '</td>' +
+        '<td>' + entry.totalPicks + '</td>' +
+        '<td style="color:var(--text-tertiary);font-size:0.8rem;">' + dateStr + '</td>' +
+        '</tr>';
+    }).join('');
+  } catch (e) {
+    // silently fail
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════
+// SECTION 18: ACCURACY TRACKING
+// ═══════════════════════════════════════════════════════
+
+async function loadAccuracy() {
+  var cardsEl = document.getElementById('accuracy-cards');
+  var emptyEl = document.getElementById('accuracy-empty');
+  if (!cardsEl) return;
+
+  try {
+    var res = await fetch(API_BASE + '/api/accuracy/' + currentType);
+    if (!res.ok) return;
+    var data = await res.json();
+
+    // Filter to modes that have predictions
+    var withData = data.filter(function(m) { return m.totalPredictions > 0; });
+
+    if (withData.length === 0) {
+      cardsEl.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = '';
+      return;
+    }
+
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    // Sort by Brier score (lower is better)
+    withData.sort(function(a, b) { return a.brierScore - b.brierScore; });
+
+    cardsEl.innerHTML = withData.map(function(mode, idx) {
+      var rank = idx + 1;
+      var brierColor = mode.brierScore < 0.2 ? '#22c55e' : mode.brierScore < 0.25 ? '#f59e0b' : '#ef4444';
+      var categoryColor = CATEGORY_COLORS[mode.category] || '#666';
+
+      // Build mini calibration chart (simple bar representation)
+      var bucketBars = '';
+      if (mode.buckets && mode.buckets.length > 0) {
+        bucketBars = '<div style="display:flex;gap:2px;height:32px;align-items:flex-end;margin-top:0.5rem;">';
+        mode.buckets.forEach(function(b) {
+          if (b.count === 0) {
+            bucketBars += '<div style="flex:1;background:var(--border);border-radius:2px;min-height:2px;"></div>';
+          } else {
+            var height = Math.max(4, b.actualWinRate * 32);
+            var barColor = Math.abs(b.actualWinRate - b.predictedMean) < 0.1 ? '#22c55e' : '#f59e0b';
+            bucketBars += '<div style="flex:1;background:' + barColor + ';border-radius:2px;height:' + height + 'px;" title="Predicted: ' + (b.predictedMean * 100).toFixed(0) + '% Actual: ' + (b.actualWinRate * 100).toFixed(0) + '%"></div>';
+          }
+        });
+        bucketBars += '</div>';
+      }
+
+      return '<div class="card" style="padding:1.25rem;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">' +
+          '<div>' +
+            '<span style="font-size:0.7rem;color:var(--text-tertiary);font-weight:600;margin-right:0.5rem;">#' + rank + '</span>' +
+            '<span style="font-weight:700;font-size:0.95rem;">' + mode.modeName + '</span>' +
+          '</div>' +
+          '<span style="font-size:0.68rem;padding:0.2rem 0.5rem;border-radius:4px;background:' + categoryColor + '22;color:' + categoryColor + ';font-weight:600;">' + mode.category + '</span>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:0.5rem;">' +
+          '<div>' +
+            '<div style="font-size:0.68rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;">Brier Score</div>' +
+            '<div style="font-family:JetBrains Mono,monospace;font-size:1.1rem;font-weight:700;color:' + brierColor + ';">' + mode.brierScore.toFixed(4) + '</div>' +
+          '</div>' +
+          '<div>' +
+            '<div style="font-size:0.68rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;">Log Loss</div>' +
+            '<div style="font-family:JetBrains Mono,monospace;font-size:1.1rem;font-weight:700;">' + mode.logLoss.toFixed(4) + '</div>' +
+          '</div>' +
+          '<div>' +
+            '<div style="font-size:0.68rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;">Predictions</div>' +
+            '<div style="font-family:JetBrains Mono,monospace;font-size:1.1rem;font-weight:700;">' + mode.totalPredictions + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:0.72rem;color:var(--text-tertiary);">Calibration (predicted vs actual)</div>' +
+        bucketBars +
+      '</div>';
+    }).join('');
+
+  } catch (e) {
+    // silently fail
+  }
 }

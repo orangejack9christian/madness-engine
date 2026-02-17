@@ -304,3 +304,108 @@ export function getFeedbackEntries(limit: number = 50): Array<{
     'SELECT id, type, message, mode_id, view, created_at FROM feedback ORDER BY created_at DESC LIMIT ?'
   ).all(limit) as any[];
 }
+
+// === Bracket Challenge Operations ===
+
+export function saveBracketChallenge(
+  id: string,
+  displayName: string,
+  tournamentType: TournamentType,
+  year: number,
+  picks: Record<string, string>,
+): void {
+  const database = getDatabase();
+  database.prepare(`
+    INSERT OR REPLACE INTO bracket_challenges (id, display_name, tournament_type, year, picks_json, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(id, displayName, tournamentType, year, JSON.stringify(picks), Date.now());
+}
+
+export function getBracketChallenge(id: string): {
+  id: string;
+  display_name: string;
+  tournament_type: string;
+  year: number;
+  picks_json: string;
+  score: number | null;
+  correct_picks: number;
+  total_picks: number;
+  created_at: number;
+} | undefined {
+  const database = getDatabase();
+  return database.prepare(
+    'SELECT * FROM bracket_challenges WHERE id = ?'
+  ).get(id) as any;
+}
+
+export function getBracketChallengeLeaderboard(
+  year: number,
+  tournamentType: TournamentType,
+  limit: number = 50,
+): Array<{
+  id: string;
+  display_name: string;
+  score: number | null;
+  correct_picks: number;
+  total_picks: number;
+  created_at: number;
+}> {
+  const database = getDatabase();
+  return database.prepare(`
+    SELECT id, display_name, score, correct_picks, total_picks, created_at
+    FROM bracket_challenges
+    WHERE year = ? AND tournament_type = ?
+    ORDER BY score DESC, correct_picks DESC
+    LIMIT ?
+  `).all(year, tournamentType, limit) as any[];
+}
+
+export function updateChallengeScore(
+  id: string,
+  score: number,
+  correctPicks: number,
+  totalPicks: number,
+): void {
+  const database = getDatabase();
+  database.prepare(`
+    UPDATE bracket_challenges SET score = ?, correct_picks = ?, total_picks = ? WHERE id = ?
+  `).run(score, correctPicks, totalPicks, id);
+}
+
+// === Actual Results Operations ===
+
+export function insertActualResult(
+  gameId: string,
+  year: number,
+  tournamentType: TournamentType,
+  round: Round,
+  team1Id: string,
+  team2Id: string,
+  winnerId: string,
+  team1Score?: number,
+  team2Score?: number,
+): void {
+  const database = getDatabase();
+  database.prepare(`
+    INSERT OR REPLACE INTO actual_results (game_id, year, tournament_type, round, team1_id, team2_id, winner_id, team1_score, team2_score, recorded_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(gameId, year, tournamentType, round, team1Id, team2Id, winnerId, team1Score ?? null, team2Score ?? null, Date.now());
+}
+
+export function getActualResults(
+  year: number,
+  tournamentType: TournamentType,
+): Array<{
+  game_id: string;
+  round: string;
+  team1_id: string;
+  team2_id: string;
+  winner_id: string;
+  team1_score: number | null;
+  team2_score: number | null;
+}> {
+  const database = getDatabase();
+  return database.prepare(
+    'SELECT game_id, round, team1_id, team2_id, winner_id, team1_score, team2_score FROM actual_results WHERE year = ? AND tournament_type = ? ORDER BY recorded_at'
+  ).all(year, tournamentType) as any[];
+}

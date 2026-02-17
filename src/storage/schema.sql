@@ -120,3 +120,36 @@ CREATE TABLE IF NOT EXISTS feedback (
 );
 
 CREATE INDEX IF NOT EXISTS idx_feedback_time ON feedback(created_at);
+
+-- Saved bracket challenges (user picks)
+CREATE TABLE IF NOT EXISTS bracket_challenges (
+  id TEXT PRIMARY KEY,
+  display_name TEXT NOT NULL,
+  tournament_type TEXT NOT NULL,
+  year INTEGER NOT NULL,
+  picks_json TEXT NOT NULL,
+  score REAL,
+  correct_picks INTEGER DEFAULT 0,
+  total_picks INTEGER DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_challenges_year ON bracket_challenges(year, tournament_type);
+CREATE INDEX IF NOT EXISTS idx_challenges_score ON bracket_challenges(score DESC);
+
+-- Actual tournament results (for accuracy tracking)
+CREATE TABLE IF NOT EXISTS actual_results (
+  game_id TEXT NOT NULL,
+  year INTEGER NOT NULL,
+  tournament_type TEXT NOT NULL,
+  round TEXT NOT NULL,
+  team1_id TEXT NOT NULL,
+  team2_id TEXT NOT NULL,
+  winner_id TEXT NOT NULL,
+  team1_score INTEGER,
+  team2_score INTEGER,
+  recorded_at INTEGER NOT NULL,
+  PRIMARY KEY (game_id, year, tournament_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_actual_results_year ON actual_results(year, tournament_type);

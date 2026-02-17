@@ -11,13 +11,22 @@ import { buildBracket } from '../bracket/bracket-builder';
 import { runBracketSimulationSync } from '../engine/simulator';
 import { aggregateBracketResults } from '../engine/bracket-propagator';
 import { generateReport } from '../output/report-generator';
-import { upsertTeams, upsertTeamAdvancements, getTeamAdvancements, insertFeedback, getFeedbackEntries } from '../storage/database';
+import {
+  upsertTeams, upsertTeamAdvancements, getTeamAdvancements,
+  insertFeedback, getFeedbackEntries,
+  saveBracketChallenge, getBracketChallenge, getBracketChallengeLeaderboard, updateChallengeScore,
+  insertActualResult, getActualResults,
+} from '../storage/database';
 import { getModeIds, getMode, getAllModes, hasMode } from '../modes/registry';
 import { ModeBlender } from '../modes/mode-blender';
 import { GameStateTracker } from '../ingestion/game-state-tracker';
 import { ESPNPoller } from '../ingestion/espn-poller';
 import { createManualInputRouter } from '../ingestion/manual-input';
 import { RealTimeLoop } from '../pipeline/real-time-loop';
+import { evaluateMode } from '../evaluation/prediction-logger';
+import { formatCalibration } from '../evaluation/calibration';
+import { updateTeamStats } from '../ingestion/stats-updater';
+import crypto from 'crypto';
 
 // Import all mode implementations
 import '../modes/implementations/pure-statistical';
@@ -400,6 +409,166 @@ app.get('/api/feedback', (_req, res) => {
   try {
     const entries = getFeedbackEntries(100);
     res.json(entries);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// === Bracket Challenge Endpoints ===
+
+app.post('/api/challenge', (req, res) => {
+  try {
+    const { displayName, picks, tournamentType } = req.body;
+    if (!displayName || !picks || typeof picks !== 'object') {
+      res.status(400).json({ error: 'displayName and picks are required' });
+      return;
+    }
+    const name = String(displayName).trim().slice(0, 50);
+    if (!name) {
+      res.status(400).json({ error: 'displayName cannot be empty' });
+      return;
+    }
+    const type = (tournamentType || 'mens') as TournamentType;
+    const id = crypto.randomBytes(8).toString('hex');
+    saveBracketChallenge(id, name, type, CONFIG.DEFAULT_YEAR, picks);
+    res.json({ success: true, id, displayName: name });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/challenge/:id', (req, res) => {
+  try {
+    const entry = getBracketChallenge(req.params.id);
+    if (!entry) {
+      res.status(404).json({ error: 'Challenge not found' });
+      return;
+    }
+    res.json({
+      id: entry.id,
+      displayName: entry.display_name,
+      tournamentType: entry.tournament_type,
+      year: entry.year,
+      picks: JSON.parse(entry.picks_json),
+      score: entry.score,
+      correctPicks: entry.correct_picks,
+      totalPicks: entry.total_picks,
+      createdAt: entry.created_at,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/leaderboard/:type', (req, res) => {
+  try {
+    const type = req.params.type as TournamentType;
+    const entries = getBracketChallengeLeaderboard(CONFIG.DEFAULT_YEAR, type);
+    res.json(entries.map(e => ({
+      id: e.id,
+      displayName: e.display_name,
+      score: e.score,
+      correctPicks: e.correct_picks,
+      totalPicks: e.total_picks,
+      createdAt: e.created_at,
+    })));
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// === Accuracy / Calibration Endpoints ===
+
+app.get('/api/accuracy/:type', (req, res) => {
+  try {
+    const type = req.params.type as TournamentType;
+    const modeIds = getModeIds();
+    const results = modeIds.map(modeId => {
+      const calibration = evaluateMode(modeId, CONFIG.DEFAULT_YEAR, type);
+      const mode = getMode(modeId);
+      return {
+        modeId,
+        modeName: mode.name,
+        category: mode.category,
+        brierScore: calibration.brierScore,
+        logLoss: calibration.logLoss,
+        totalPredictions: calibration.totalPredictions,
+        buckets: calibration.buckets,
+      };
+    });
+    res.json(results);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/results/:type', (req, res) => {
+  try {
+    const type = req.params.type as TournamentType;
+    const results = getActualResults(CONFIG.DEFAULT_YEAR, type);
+    res.json(results);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/results/:type', (req, res) => {
+  try {
+    const type = req.params.type as TournamentType;
+    const { gameId, round, team1Id, team2Id, winnerId, team1Score, team2Score } = req.body;
+    if (!gameId || !round || !team1Id || !team2Id || !winnerId) {
+      res.status(400).json({ error: 'gameId, round, team1Id, team2Id, and winnerId are required' });
+      return;
+    }
+    insertActualResult(gameId, CONFIG.DEFAULT_YEAR, type, round as any, team1Id, team2Id, winnerId, team1Score, team2Score);
+
+    // Also score any bracket challenges that have picks for this matchup
+    const challenges = getBracketChallengeLeaderboard(CONFIG.DEFAULT_YEAR, type, 1000);
+    for (const challenge of challenges) {
+      const full = getBracketChallenge(challenge.id);
+      if (!full) continue;
+      const picks = JSON.parse(full.picks_json);
+      const allResults = getActualResults(CONFIG.DEFAULT_YEAR, type);
+      let correct = 0;
+      let total = allResults.length;
+      for (const result of allResults) {
+        // Check if any pick matches this game's winner
+        const pickValues = Object.values(picks) as string[];
+        if (pickValues.includes(result.winner_id)) {
+          correct++;
+        }
+      }
+      const score = total > 0 ? (correct / total) * 100 : 0;
+      updateChallengeScore(challenge.id, score, correct, total);
+    }
+
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// === Stats Update Endpoint ===
+
+app.post('/api/update-stats/:type', async (req, res) => {
+  try {
+    const type = req.params.type as TournamentType;
+
+    // Try to pull latest stats from ESPN
+    const updateResult = await updateTeamStats(type, CONFIG.DEFAULT_YEAR);
+
+    // Re-load teams from disk (now with updated stats)
+    const teams = loadTeams(CONFIG.DEFAULT_YEAR, type);
+    upsertTeams(teams, CONFIG.DEFAULT_YEAR);
+
+    // Invalidate simulation cache
+    cachedResults.clear();
+
+    res.json({
+      success: true,
+      teamsLoaded: teams.length,
+      teamsUpdated: updateResult.updated,
+    });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }

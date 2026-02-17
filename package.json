@@ -12,6 +12,8 @@
     "live": "tsx src/index.ts live",
     "evaluate": "tsx src/index.ts evaluate",
     "serve": "tsx src/server/index.ts",
+    "update-stats": "tsx src/ingestion/stats-updater.ts",
+    "update-stats:womens": "tsx src/ingestion/stats-updater.ts womens",
     "test": "vitest run",
     "test:watch": "vitest"
   },
