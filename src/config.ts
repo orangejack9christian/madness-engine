@@ -4,8 +4,8 @@ import { TournamentType } from './core/types';
 
 export const CONFIG = {
   // Simulation settings
-  SIMULATIONS_PER_UPDATE: parseInt(process.env.SIMULATIONS_PER_UPDATE || '5000'),
-  BATCH_SIMULATIONS: parseInt(process.env.BATCH_SIMULATIONS || '10000'),
+  SIMULATIONS_PER_UPDATE: parseInt(process.env.SIMULATIONS_PER_UPDATE || '1000'),
+  BATCH_SIMULATIONS: parseInt(process.env.BATCH_SIMULATIONS || '1000'),
   WORKER_THREADS: parseInt(process.env.WORKER_THREADS || String(Math.max(1, os.cpus().length - 1))),
 
   // Live data settings
