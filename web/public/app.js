@@ -27,8 +27,7 @@ let pickSelections = {};
 let teamColors = {};
 
 // ─── Feedback Config ─────────────────────────────────
-// TODO: Replace with your email address
-const FEEDBACK_EMAIL = 'your-email@example.com';
+const FEEDBACK_EMAIL = 'orangejack9.christian@gmail.com';
 
 // ─── Region Colors ───────────────────────────────────
 const REGION_COLORS = {
