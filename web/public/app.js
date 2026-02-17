@@ -26,6 +26,10 @@ let tableSortDirection = 'asc';
 let pickSelections = {};
 let teamColors = {};
 
+// ─── Feedback Config ─────────────────────────────────
+// TODO: Replace with your email address
+const FEEDBACK_EMAIL = 'your-email@example.com';
+
 // ─── Region Colors ───────────────────────────────────
 const REGION_COLORS = {
   east: '#8b5cf6',
@@ -96,6 +100,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupTableViewToggle();
   setupH2H();
   setupBracketToolbar();
+  setupFeedbackPanel();
+  setupModeExplainer();
 
   await loadTeamColors();
   await loadModes();
@@ -2924,4 +2930,179 @@ function injectDynamicStyles() {
     }
   `;
   document.head.appendChild(style);
+}
+
+// ─── Feedback Panel ──────────────────────────────────
+function setupFeedbackPanel() {
+  const fab = document.getElementById('feedback-fab');
+  const panel = document.getElementById('feedback-panel');
+  const closeBtn = document.getElementById('feedback-close');
+  const sendBtn = document.getElementById('feedback-send');
+  const textarea = document.getElementById('feedback-message');
+  let feedbackType = 'bug';
+
+  if (!fab || !panel) return;
+
+  fab.addEventListener('click', () => {
+    panel.classList.toggle('open');
+    trackEvent('feedback_open');
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => panel.classList.remove('open'));
+  }
+
+  // Type toggle buttons
+  document.querySelectorAll('.feedback-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.feedback-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      feedbackType = btn.dataset.type;
+    });
+  });
+
+  // Send via mailto
+  if (sendBtn) {
+    sendBtn.addEventListener('click', () => {
+      const message = textarea ? textarea.value.trim() : '';
+      if (!message) {
+        showToast('Please enter a message', 'warning');
+        return;
+      }
+
+      const typeLabel = feedbackType === 'bug' ? 'Bug Report' : feedbackType === 'suggestion' ? 'Suggestion' : 'Feedback';
+      const subject = encodeURIComponent('[MadnessEngine] ' + typeLabel);
+      const body = encodeURIComponent(
+        typeLabel + '\n' +
+        '─────────────────\n\n' +
+        message + '\n\n' +
+        '─────────────────\n' +
+        'Mode: ' + (currentMode || 'none') + '\n' +
+        'View: ' + currentView + '\n' +
+        'URL: ' + window.location.href + '\n' +
+        'User Agent: ' + navigator.userAgent
+      );
+
+      window.open('mailto:' + FEEDBACK_EMAIL + '?subject=' + subject + '&body=' + body, '_self');
+      trackEvent('feedback_send', { type: feedbackType });
+
+      if (textarea) textarea.value = '';
+      panel.classList.remove('open');
+      showToast('Opening email client...', 'success');
+    });
+  }
+
+  // Close panel when clicking outside
+  document.addEventListener('click', (e) => {
+    if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== fab && !fab.contains(e.target)) {
+      panel.classList.remove('open');
+    }
+  });
+}
+
+// ─── Mode Explainer ──────────────────────────────────
+function setupModeExplainer() {
+  const infoBtn = document.getElementById('mode-info-btn');
+  const overlay = document.getElementById('mode-explainer-overlay');
+  const closeBtn = document.getElementById('explainer-close');
+
+  if (!infoBtn || !overlay) return;
+
+  infoBtn.addEventListener('click', () => {
+    renderModeExplainer();
+    overlay.classList.add('open');
+    trackEvent('mode_explainer_open');
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
+  }
+
+  // Close on overlay background click
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) {
+      overlay.classList.remove('open');
+    }
+  });
+}
+
+function renderModeExplainer() {
+  const body = document.getElementById('explainer-body');
+  if (!body || !modes.length) return;
+
+  const categoryOrder = { research: 1, hybrid: 2, entertainment: 3 };
+  const sorted = [...modes].sort((a, b) => {
+    const ca = categoryOrder[a.category] || 99;
+    const cb = categoryOrder[b.category] || 99;
+    return ca - cb || a.name.localeCompare(b.name);
+  });
+
+  // Group by category
+  const groups = {};
+  sorted.forEach(m => {
+    if (!groups[m.category]) groups[m.category] = [];
+    groups[m.category].push(m);
+  });
+
+  const categoryLabels = {
+    research: 'Research-Grade',
+    hybrid: 'Hybrid Models',
+    entertainment: 'Entertainment / Fun'
+  };
+
+  const categoryDescriptions = {
+    research: 'Built on real basketball analytics — efficiency ratings, tempo, strength of schedule, and advanced stats. These produce the most accurate predictions.',
+    hybrid: 'Blend real stats with specific factors like coaching, momentum, or fatigue. These highlight particular aspects of the game that can swing outcomes.',
+    entertainment: 'Pure fun — mascot fights, chaos theory, and more. Not meant for serious predictions, but they make March Madness even more entertaining.'
+  };
+
+  let html = '';
+
+  Object.keys(categoryLabels).forEach(cat => {
+    const group = groups[cat];
+    if (!group || !group.length) return;
+
+    html += '<div style="margin-bottom:1.5rem;">';
+    html += '<h4 style="color:var(--text-primary);font-size:0.9rem;margin:0 0 0.25rem;">' + categoryLabels[cat] + ' <span style="color:var(--text-tertiary);font-weight:400;">(' + group.length + ' modes)</span></h4>';
+    html += '<p style="color:var(--text-tertiary);font-size:0.78rem;margin:0 0 0.75rem;line-height:1.4;">' + categoryDescriptions[cat] + '</p>';
+    html += '<div class="explainer-grid">';
+
+    group.forEach(mode => {
+      var isActive = mode.id === currentMode;
+      var dotColor = CATEGORY_COLORS[mode.category] || '#666';
+      html += '<div class="explainer-card' + (isActive ? ' active-mode' : '') + '" data-mode-id="' + mode.id + '">';
+      html += '<div class="explainer-card-header">';
+      html += '<span class="explainer-card-dot" style="background:' + dotColor + '"></span>';
+      html += '<span class="explainer-card-name">' + mode.name + '</span>';
+      html += '<span class="explainer-card-badge badge-' + mode.category + '">' + mode.category + '</span>';
+      html += '</div>';
+      html += '<div class="explainer-card-desc">' + mode.description + '</div>';
+      html += '<div class="explainer-card-confidence">Confidence: ' + mode.confidenceTag.replace(/-/g, ' ') + '</div>';
+      if (isActive) {
+        html += '<div style="margin-top:0.35rem;font-size:0.7rem;color:var(--accent-bright);font-weight:600;">CURRENTLY ACTIVE</div>';
+      }
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+  });
+
+  body.innerHTML = html;
+
+  // Make cards clickable to switch modes
+  body.querySelectorAll('.explainer-card').forEach(card => {
+    card.addEventListener('click', () => {
+      var modeId = card.dataset.modeId;
+      if (modeId) {
+        selectMode(modeId);
+        document.getElementById('mode-explainer-overlay').classList.remove('open');
+        showToast('Switched to ' + (modes.find(m => m.id === modeId)?.name || modeId), 'success');
+      }
+    });
+  });
 }
