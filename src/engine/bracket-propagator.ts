@@ -155,17 +155,27 @@ export function aggregateBracketResults(
     const champCount = simResult.championshipCounts[team.id] ?? 0;
 
     const roundProbs: Record<Round, number> = {} as Record<Round, number>;
-    roundProbs['first-four'] = 1;
-    roundProbs['round-of-64'] = 1; // All 64 teams start here
+
+    // Check if this team is a First Four (play-in) team
+    const isFirstFourTeam = (counts?.['first-four'] ?? 0) > 0;
 
     for (const round of ROUNDS_IN_ORDER) {
       roundProbs[round] = (counts?.[round] ?? 0) / totalSims;
     }
 
-    // Expected wins: sum of advancement probabilities
+    // Teams in the First Four start at the play-in; others start at R64
+    if (isFirstFourTeam) {
+      roundProbs['first-four'] = 1; // They all play in the First Four
+    } else {
+      roundProbs['first-four'] = 0;
+      roundProbs['round-of-64'] = 1; // Non-play-in teams start here
+    }
+
+    // Expected wins: sum of advancement probabilities (excluding entry round)
     let expectedWins = 0;
     for (const round of ROUNDS_IN_ORDER) {
-      if (round === 'round-of-64') continue; // Making R64 isn't a "win"
+      if (round === 'first-four') continue; // First Four entry isn't a "win"
+      if (round === 'round-of-64' && !isFirstFourTeam) continue; // Making R64 isn't a "win" for main-draw teams
       expectedWins += roundProbs[round];
     }
 

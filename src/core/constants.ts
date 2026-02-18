@@ -3,6 +3,7 @@ import { Round, Region } from './types';
 export const REGIONS: Region[] = ['east', 'west', 'south', 'midwest'];
 
 export const ROUNDS_IN_ORDER: Round[] = [
+  'first-four',
   'round-of-64',
   'round-of-32',
   'sweet-sixteen',

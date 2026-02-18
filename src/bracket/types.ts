@@ -9,6 +9,7 @@ export interface BracketSlot {
   winnerId?: string;
   liveGame?: LiveGameState;
   nextSlotId?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface SerializedBracket {

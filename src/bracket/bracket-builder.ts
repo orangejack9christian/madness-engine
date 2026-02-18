@@ -19,8 +19,44 @@ export function buildBracket(
   const slots: BracketSlot[] = [];
   const teamsByRegionAndSeed = new Map<string, Team>();
 
+  // Detect First Four play-in games (duplicate region-seed pairs)
+  const duplicates = new Map<string, Team[]>();
   for (const team of teams) {
-    teamsByRegionAndSeed.set(`${team.region}-${team.seed}`, team);
+    const key = `${team.region}-${team.seed}`;
+    if (teamsByRegionAndSeed.has(key)) {
+      duplicates.set(key, [teamsByRegionAndSeed.get(key)!, team]);
+    }
+    teamsByRegionAndSeed.set(key, team);
+  }
+
+  // Create First Four play-in slots. Winners feed into the R64 slot.
+  let ffGameNum = 1;
+  for (const [key, [teamA, teamB]] of duplicates) {
+    const slotId = `ff-playin-g${ffGameNum}`;
+    const [region] = key.split('-');
+
+    // Find which R64 game this seed appears in
+    const seed = parseInt(key.split('-')[1], 10);
+    let r64GameIdx = SEED_MATCHUPS.findIndex(([s1, s2]) => s1 === seed || s2 === seed);
+    const r64SlotId = `${region}-r1-g${r64GameIdx + 1}`;
+    const isSeed1 = SEED_MATCHUPS[r64GameIdx][0] === seed;
+
+    slots.push({
+      slotId,
+      round: 'first-four' as any,
+      region: region as any,
+      team1Id: teamA.id,
+      team2Id: teamB.id,
+      nextSlotId: r64SlotId,
+      // Mark which side of the R64 game the winner feeds into
+      metadata: { feedsIntoSeed1: isSeed1 },
+    });
+
+    // Remove both teams from the main map so the R64 slot leaves
+    // that team position empty (it will be filled by the play-in winner)
+    teamsByRegionAndSeed.delete(key);
+
+    ffGameNum++;
   }
 
   // Build each region independently (rounds 1-4)
@@ -138,7 +174,7 @@ function updateSlotNextId(slots: BracketSlot[], slotId: string, nextSlotId: stri
 export function getTeamStartingSlots(bracket: SerializedBracket): Map<string, string> {
   const result = new Map<string, string>();
   for (const slot of bracket.slots) {
-    if (slot.round === 'round-of-64') {
+    if (slot.round === 'round-of-64' || slot.round === 'first-four') {
       if (slot.team1Id) result.set(slot.team1Id, slot.slotId);
       if (slot.team2Id) result.set(slot.team2Id, slot.slotId);
     }

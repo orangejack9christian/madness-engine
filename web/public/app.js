@@ -703,6 +703,9 @@ function renderUpsetAlerts(rawResults) {
   regions.forEach(function(region) {
     seedMatchups.forEach(function(pair) {
       var favSeed = pair[0], dogSeed = pair[1];
+      // Only show upsets with meaningful seed gap (skip 8v9, 7v10)
+      if (dogSeed - favSeed < 3) return;
+
       var fav = rawResults.find(function(t) {
         return (t.region || '').toLowerCase() === region && t.seed === favSeed;
       });
