@@ -237,6 +237,31 @@ input:focus-visible {
 
 .nav-controls { display: flex; align-items: center; gap: 1.25rem; flex-shrink: 0; }
 
+/* Buy Me a Coffee — nav bar button */
+.bmac-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: linear-gradient(135deg, #ffdd00, #ff6600);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.78rem;
+  border-radius: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.bmac-nav-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255,221,0,0.35);
+}
+.bmac-nav-btn svg { flex-shrink: 0; }
+@media (max-width: 768px) {
+  .bmac-nav-label { display: none; }
+  .bmac-nav-btn { padding: 0.35rem 0.5rem; }
+}
+
 .tournament-toggle {
   display: flex;
   background: var(--bg-secondary);

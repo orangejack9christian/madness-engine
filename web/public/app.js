@@ -1030,8 +1030,16 @@ function showTeamDetail(teamId) {
       mascotHtml +
     '</div>';
 
-  // Show panel
+  // Show panel with animation
   panel.style.display = 'block';
+  panel.classList.remove('panel-enter');
+  // Force reflow so the animation re-triggers
+  void panel.offsetWidth;
+  panel.classList.add('panel-enter');
+  // Scroll into view so the user actually sees it
+  setTimeout(function() {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 50);
 
   // Render radar chart
   var radarCanvas = document.getElementById('td-radar-canvas');
@@ -1050,10 +1058,29 @@ function showTeamDetail(teamId) {
     };
   }
 
+  // Close handler (shared)
+  function closeTeamDetail() {
+    panel.style.display = 'none';
+    panel.classList.remove('panel-enter');
+    var backdrop = document.getElementById('team-detail-backdrop');
+    if (backdrop) backdrop.remove();
+  }
+
   // Close button handler
   var closeBtn = document.getElementById('team-detail-close');
   if (closeBtn) {
-    closeBtn.onclick = function() { panel.style.display = 'none'; };
+    closeBtn.onclick = closeTeamDetail;
+  }
+
+  // Add backdrop for mobile drawer
+  if (window.innerWidth <= 1100) {
+    var existingBackdrop = document.getElementById('team-detail-backdrop');
+    if (existingBackdrop) existingBackdrop.remove();
+    var backdrop = document.createElement('div');
+    backdrop.id = 'team-detail-backdrop';
+    backdrop.className = 'team-detail-backdrop';
+    backdrop.onclick = closeTeamDetail;
+    document.body.appendChild(backdrop);
   }
 }
 
@@ -2610,6 +2637,40 @@ function injectDynamicStyles() {
       top: calc(var(--nav-height) + var(--mode-bar-height) + 1.5rem);
       max-height: calc(100vh - var(--nav-height) - var(--mode-bar-height) - 3rem);
       overflow-y: auto;
+      box-shadow: 0 0 0 0 rgba(59,130,246,0);
+      transition: box-shadow 0.4s ease;
+    }
+
+    /* Slide-in + glow animation when opened */
+    @keyframes panelSlideIn {
+      0% { opacity: 0; transform: translateY(20px); box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+      40% { opacity: 1; transform: translateY(0); box-shadow: 0 0 24px 4px rgba(59,130,246,0.35); }
+      100% { opacity: 1; transform: translateY(0); box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+    }
+    .team-detail-panel.panel-enter {
+      animation: panelSlideIn 0.7s ease forwards;
+    }
+
+    /* On single-column layouts, make panel a slide-over drawer */
+    @media (max-width: 1100px) {
+      .team-detail-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(420px, 90vw);
+        max-height: 100vh;
+        border-radius: 16px 0 0 16px;
+        z-index: 250;
+        box-shadow: -8px 0 40px rgba(0,0,0,0.5);
+      }
+      @keyframes panelSlideIn {
+        0% { opacity: 0; transform: translateX(100%); }
+        100% { opacity: 1; transform: translateX(0); }
+      }
+      .team-detail-panel.panel-enter {
+        animation: panelSlideIn 0.3s ease forwards;
+      }
     }
 
     .team-detail-header {
@@ -2629,6 +2690,16 @@ function injectDynamicStyles() {
     }
 
     .team-detail-close:hover { color: var(--text-primary); }
+
+    /* Backdrop for mobile drawer */
+    .team-detail-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 249;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     .team-detail-seed {
       display: inline-flex;
