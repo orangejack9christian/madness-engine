@@ -16,6 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -397,6 +398,24 @@
               <option value="south">South</option>
               <option value="midwest">Midwest</option>
             </select>
+            <div class="bracket-divider"></div>
+            <button class="bracket-zoom-btn" id="btn-save-bracket" title="Save this bracket" style="font-size:0.72rem;padding:0.3rem 0.6rem;min-width:auto;white-space:nowrap;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:3px;"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="17,21 17,13 7,13 7,21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="7,3 7,8 15,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Save
+            </button>
+            <div class="saved-brackets-wrapper" style="position:relative;">
+              <button class="bracket-zoom-btn" id="btn-load-bracket" title="Load saved bracket" style="font-size:0.72rem;padding:0.3rem 0.6rem;min-width:auto;white-space:nowrap;">
+                My Brackets <span id="saved-bracket-count" style="font-size:0.6rem;opacity:0.7;"></span>
+              </button>
+              <div class="saved-brackets-dropdown" id="saved-brackets-dropdown" style="display:none;">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+            <div class="bracket-divider"></div>
+            <button class="bracket-zoom-btn" id="btn-export-bracket" title="Download bracket as image" style="font-size:0.72rem;padding:0.3rem 0.6rem;min-width:auto;white-space:nowrap;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:3px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Export
+            </button>
           </div>
         </div>
         <div class="bracket-viewport" id="bracket-viewport">
@@ -630,7 +649,7 @@
           </div>
 
           <!-- H2H Mode Edge Summary -->
-          <div class="h2h-edge-summary" id="h2h-edge-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.5rem 0;">
+          <div class="h2h-edge-summary" id="h2h-edge-summary">
           </div>
 
           <!-- Mode-by-Mode Comparison Table -->

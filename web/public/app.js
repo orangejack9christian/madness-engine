@@ -1801,7 +1801,10 @@ async function simulateBracket() {
 
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<span class="btn-spinner"></span> Simulating...';
+    var simLabel = whatIfLocks.length > 0
+      ? '<span class="btn-spinner"></span> What If (' + whatIfLocks.length + ' locks)...'
+      : '<span class="btn-spinner"></span> Simulating...';
+    btn.innerHTML = simLabel;
   }
 
   try {
@@ -1824,9 +1827,11 @@ async function simulateBracket() {
         body: JSON.stringify({ lockedResults: whatIfLocks, sims: sims }),
       });
       data = await whatIfRes.json();
+      if (data.error) throw new Error(data.error);
     } else {
       const res = await fetch(`${API_BASE}/api/simulate/${currentType}/${modeId}?sims=${sims}`);
       data = await res.json();
+      if (data.error) throw new Error(data.error);
     }
     lastData = data;
 
@@ -1908,11 +1913,21 @@ function setupBracketToolbar() {
 
   // What If mode toggle
   const whatIfBtn = document.getElementById('btn-whatif-toggle');
+
+  function updateWhatIfBadge() {
+    if (!whatIfBtn) return;
+    var count = whatIfLocks.length;
+    if (whatIfMode && count > 0) {
+      whatIfBtn.innerHTML = 'What If <span class="whatif-badge">' + count + '</span>';
+    } else {
+      whatIfBtn.textContent = whatIfMode ? 'What If: ON' : 'What If';
+    }
+  }
+
   if (whatIfBtn) {
     whatIfBtn.addEventListener('click', function() {
       whatIfMode = !whatIfMode;
       whatIfBtn.classList.toggle('whatif-active', whatIfMode);
-      whatIfBtn.textContent = whatIfMode ? 'What If: ON' : 'What If';
 
       // Toggle hover cursor class on bracket container
       var bracketEl = document.querySelector('.bracket-container');
@@ -1928,6 +1943,7 @@ function setupBracketToolbar() {
       } else {
         showToast('What If mode on — click teams to lock winners, then Simulate', 'info');
       }
+      updateWhatIfBadge();
     });
   }
 
@@ -1971,8 +1987,188 @@ function setupBracketToolbar() {
         teamEl.classList.add('bk-locked');
         showToast('Winner locked — ' + whatIfLocks.length + ' lock(s) set', 'success');
       }
+      updateWhatIfBadge();
     });
   }
+
+  // Bracket image export
+  var exportBtn = document.getElementById('btn-export-bracket');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', async function() {
+      if (typeof html2canvas !== 'function') {
+        showToast('Image export not available', 'warning');
+        return;
+      }
+      var container = document.getElementById('bracket-svg');
+      if (!container || !container.innerHTML.trim()) {
+        showToast('Simulate a bracket first', 'info');
+        return;
+      }
+      exportBtn.disabled = true;
+      exportBtn.textContent = 'Exporting...';
+      try {
+        // Temporarily reset transform for clean capture
+        var origTransform = container.style.transform;
+        container.style.transform = 'none';
+        var canvas = await html2canvas(container, {
+          backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0f1117',
+          scale: 2,
+          useCORS: true,
+          logging: false,
+        });
+        container.style.transform = origTransform;
+
+        // Add header with title
+        var finalCanvas = document.createElement('canvas');
+        var headerH = 60;
+        finalCanvas.width = canvas.width;
+        finalCanvas.height = canvas.height + headerH;
+        var ctx = finalCanvas.getContext('2d');
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0f1117';
+        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#fff';
+        ctx.font = 'bold 32px Inter, sans-serif';
+        ctx.fillText('MadnessEngine — ' + (currentType === 'womens' ? "Women's" : "Men's") + ' Bracket 2026', 30, 40);
+        ctx.drawImage(canvas, 0, headerH);
+
+        var link = document.createElement('a');
+        link.download = 'madnessengine-bracket-' + currentType + '.png';
+        link.href = finalCanvas.toDataURL('image/png');
+        link.click();
+        showToast('Bracket image downloaded', 'success');
+      } catch (err) {
+        console.error('Export failed:', err);
+        showToast('Export failed — try again', 'warning');
+      } finally {
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;margin-right:3px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Export';
+      }
+    });
+  }
+
+  // ── Saved Brackets (localStorage) ──
+  var STORAGE_KEY = 'madness-saved-brackets';
+  var saveBtn = document.getElementById('btn-save-bracket');
+  var loadBtn = document.getElementById('btn-load-bracket');
+  var dropdown = document.getElementById('saved-brackets-dropdown');
+  var countBadge = document.getElementById('saved-bracket-count');
+
+  function getSavedBrackets() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+    catch(e) { return []; }
+  }
+  function saveBrackets(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    updateSavedCount();
+  }
+  function updateSavedCount() {
+    var count = getSavedBrackets().length;
+    if (countBadge) countBadge.textContent = count > 0 ? '(' + count + ')' : '';
+  }
+
+  function renderSavedDropdown() {
+    if (!dropdown) return;
+    var list = getSavedBrackets();
+    if (list.length === 0) {
+      dropdown.innerHTML = '<div class="saved-brackets-empty">No saved brackets yet.<br>Simulate then click Save.</div>';
+      return;
+    }
+    var html = '';
+    list.forEach(function(item, idx) {
+      var date = new Date(item.timestamp);
+      var dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      var champName = item.champion || 'Unknown';
+      html += '<div class="saved-bracket-item" data-idx="' + idx + '">' +
+        '<div class="saved-bracket-item-info">' +
+          '<div class="saved-bracket-item-name">' + escapeHtml(item.name) + '</div>' +
+          '<div class="saved-bracket-item-meta">' + escapeHtml(champName) + ' &middot; ' + dateStr + '</div>' +
+        '</div>' +
+        '<button class="saved-bracket-item-delete" data-idx="' + idx + '" title="Delete">&times;</button>' +
+      '</div>';
+    });
+    dropdown.innerHTML = html;
+  }
+
+  // Save bracket
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function() {
+      if (!lastData) {
+        showToast('Simulate a bracket first', 'info');
+        return;
+      }
+      var modeName = '';
+      if (modes.length > 0) {
+        var m = modes.find(function(m) { return m.id === (lastData.modeId || currentMode); });
+        modeName = m ? m.name : (lastData.modeId || currentMode || 'Unknown');
+      }
+      var champId = lastData.mostLikelyChampion;
+      var champTeam = allTeams.find(function(t) { return t.id === champId; });
+      var champName = champTeam ? (champTeam.shortName || champTeam.name) : 'Unknown';
+
+      var name = modeName + ' — ' + champName;
+      var entry = {
+        name: name,
+        champion: champName,
+        timestamp: Date.now(),
+        modeId: lastData.modeId || currentMode,
+        type: currentType,
+        data: lastData,
+      };
+
+      var list = getSavedBrackets();
+      // Cap at 20 saved brackets
+      if (list.length >= 20) list.pop();
+      list.unshift(entry);
+      saveBrackets(list);
+      showToast('Bracket saved: ' + name, 'success');
+    });
+  }
+
+  // Load bracket dropdown toggle
+  if (loadBtn && dropdown) {
+    loadBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var visible = dropdown.style.display !== 'none';
+      dropdown.style.display = visible ? 'none' : 'block';
+      if (!visible) renderSavedDropdown();
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function(e) {
+      if (!dropdown.contains(e.target) && e.target !== loadBtn) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    // Delegate clicks inside dropdown
+    dropdown.addEventListener('click', function(e) {
+      var deleteBtn = e.target.closest('.saved-bracket-item-delete');
+      if (deleteBtn) {
+        e.stopPropagation();
+        var idx = parseInt(deleteBtn.dataset.idx);
+        var list = getSavedBrackets();
+        list.splice(idx, 1);
+        saveBrackets(list);
+        renderSavedDropdown();
+        showToast('Bracket deleted', 'info');
+        return;
+      }
+      var item = e.target.closest('.saved-bracket-item');
+      if (item) {
+        var idx2 = parseInt(item.dataset.idx);
+        var list2 = getSavedBrackets();
+        var entry = list2[idx2];
+        if (entry && entry.data) {
+          lastData = entry.data;
+          renderBracket();
+          dropdown.style.display = 'none';
+          showToast('Loaded: ' + entry.name, 'success');
+        }
+      }
+    });
+  }
+
+  updateSavedCount();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2706,6 +2902,12 @@ function setupTableViewToggle() {
 // ═══════════════════════════════════════════════════════
 // SECTION 14: UTILITIES
 // ═══════════════════════════════════════════════════════
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 function formatPct(value) {
   if (typeof value === 'string') return value;
