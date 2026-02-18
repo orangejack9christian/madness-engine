@@ -378,6 +378,7 @@ function renderDashboard(data) {
 
   const mode = modes.find(m => m.id === currentMode);
   setTextContent('stat-mode-cat', mode ? capitalize(mode.category) : '--');
+  setTextContent('stat-mode-count', modes.length || '--');
 
   // Cinderella Watch — low seeds with upset potential
   renderCinderellaWatch(rawResults);
@@ -596,7 +597,7 @@ function renderCinderellaWatch(rawResults) {
   }
 
   container.innerHTML = cinderellas.map(t => {
-    const s16 = t.roundProbabilities ? (t.roundProbabilities['Sweet 16'] || t.roundProbabilities['S16'] || 0) : 0;
+    const s16 = t.roundProbabilities ? (t.roundProbabilities['sweet-sixteen'] || 0) : 0;
     const s16Pct = (s16 * 100).toFixed(1);
     const champPct = (t.championshipProbability * 100).toFixed(2);
     return `<div class="cinderella-item">
@@ -623,10 +624,12 @@ function renderHotTakes(rawResults, data) {
     .sort((a, b) => b.expectedWins - a.expectedWins);
   if (lowSeedStars.length > 0) {
     const star = lowSeedStars[0];
-    takes.push({
-      icon: '\u{1F525}',  // fire
-      text: `<span class="hot-take-bold">${star.teamName}</span> (${star.seed}-seed) averages <span class="hot-take-bold">${star.expectedWins.toFixed(1)} wins</span> — best among double-digit seeds`,
-    });
+    if (star.teamName && star.expectedWins != null) {
+      takes.push({
+        icon: '\u{1F525}',  // fire
+        text: `<span class="hot-take-bold">${star.teamName}</span> (${star.seed}-seed) averages <span class="hot-take-bold">${star.expectedWins.toFixed(1)} wins</span> — best among double-digit seeds`,
+      });
+    }
   }
 
   // 2. Top seed in danger — 1/2 seed with lowest E[Wins]
@@ -635,10 +638,12 @@ function renderHotTakes(rawResults, data) {
     .sort((a, b) => a.expectedWins - b.expectedWins);
   if (topSeeds.length > 0) {
     const weak = topSeeds[0];
-    takes.push({
-      icon: '\u{26A0}\u{FE0F}',  // warning
-      text: `<span class="hot-take-bold">${weak.teamName}</span> (${weak.seed}-seed) is the weakest top seed at only <span class="hot-take-bold">${(weak.championshipProbability * 100).toFixed(1)}%</span> championship odds`,
-    });
+    if (weak.teamName && weak.championshipProbability != null) {
+      takes.push({
+        icon: '\u{26A0}\u{FE0F}',  // warning
+        text: `<span class="hot-take-bold">${weak.teamName}</span> (${weak.seed}-seed) is the weakest top seed at only <span class="hot-take-bold">${(weak.championshipProbability * 100).toFixed(1)}%</span> championship odds`,
+      });
+    }
   }
 
   // 3. Dark horse — seed 5-8 with highest champ%
@@ -662,10 +667,12 @@ function renderHotTakes(rawResults, data) {
     }).sort((a, b) => a.topTeamFF - b.topTeamFF);
     if (regionStrength.length > 0) {
       const tough = regionStrength[0];
-      takes.push({
-        icon: '\u{1F480}',  // skull
-        text: `The <span class="hot-take-bold">${capitalize(tough.region)}</span> region is the region of death — best team there has only <span class="hot-take-bold">${tough.topTeamFF.toFixed(1)}%</span> Final Four odds`,
-      });
+      if (tough.region) {
+        takes.push({
+          icon: '\u{1F480}',  // skull
+          text: `The <span class="hot-take-bold">${capitalize(tough.region)}</span> region is the region of death — best team there has only <span class="hot-take-bold">${(tough.topTeamFF || 0).toFixed(1)}%</span> Final Four odds`,
+        });
+      }
     }
   }
 
@@ -818,10 +825,14 @@ function renderConsensus(comparisons) {
   var gridEl = document.getElementById('consensus-grid');
   if (!panel || !gridEl) return;
 
-  // Count champion picks
+  // Count champion picks — weight research/hybrid modes more than entertainment
   var champCounts = {};
   var ffCounts = {};
+  var researchCount = 0;
+  var entertainmentCount = 0;
   comparisons.forEach(function(comp) {
+    if (comp.category === 'entertainment') entertainmentCount++;
+    else researchCount++;
     if (comp.champion) {
       var name = comp.champion.name;
       champCounts[name] = (champCounts[name] || 0) + 1;
@@ -877,6 +888,14 @@ function renderConsensus(comparisons) {
     '</div>';
   }
 
+  if (entertainmentCount > 0) {
+    html += '<div class="consensus-card consensus-card-note">' +
+      '<div class="consensus-card-detail" style="font-size:0.8rem;opacity:0.7">' +
+      'Includes ' + entertainmentCount + ' entertainment mode' + (entertainmentCount > 1 ? 's' : '') +
+      ' (e.g. Mascot Fight, Chaos). Chart excludes these for cleaner averages.' +
+      '</div></div>';
+  }
+
   gridEl.innerHTML = html;
   panel.style.display = '';
 }
@@ -886,23 +905,26 @@ function renderCompareChart(comparisons) {
   var canvas = document.getElementById('compare-chart');
   if (!wrap || !canvas || typeof Chart === 'undefined') return;
 
-  // Aggregate top teams across all modes
+  // Aggregate top teams across all modes (exclude entertainment modes for cleaner averages)
+  var researchModes = comparisons.filter(function(c) { return c.category !== 'entertainment'; });
+  var modesToChart = researchModes.length > 0 ? researchModes : comparisons;
   var teamProbs = {};
-  comparisons.forEach(function(comp) {
-    if (comp.topTeams) {
-      comp.topTeams.forEach(function(t) {
-        if (!teamProbs[t.name]) teamProbs[t.name] = [];
-        teamProbs[t.name].push(t.probability);
-      });
-    }
+  modesToChart.forEach(function(comp) {
+    var teams = comp.top10 || comp.topTeams || [];
+    teams.forEach(function(t) {
+      var prob = t.championshipPct != null ? t.championshipPct : t.probability;
+      if (!teamProbs[t.name]) teamProbs[t.name] = [];
+      teamProbs[t.name].push(prob);
+    });
   });
 
   // Get top 10 teams by average probability
+  var modeCount = modesToChart.length;
   var teamAvgs = Object.entries(teamProbs).map(function(entry) {
     var probs = entry[1];
-    var avg = probs.reduce(function(s, v) { return s + v; }, 0) / comparisons.length;
+    var avg = probs.reduce(function(s, v) { return s + v; }, 0) / modeCount;
     var max = Math.max.apply(null, probs);
-    var min = probs.length < comparisons.length ? 0 : Math.min.apply(null, probs);
+    var min = probs.length < modeCount ? 0 : Math.min.apply(null, probs);
     return { name: entry[0], avg: avg, max: max, min: min };
   }).sort(function(a, b) { return b.avg - a.avg; }).slice(0, 10);
 
@@ -998,12 +1020,13 @@ function renderComparison(comparisons) {
 
     // Build top 5 teams if available
     let topTeamsHtml = '';
-    if (comp.topTeams && comp.topTeams.length > 0) {
-      const teamItems = comp.topTeams.slice(0, 5).map((t, i) =>
+    const topTeamsList = comp.top10 || comp.topTeams || [];
+    if (topTeamsList.length > 0) {
+      const teamItems = topTeamsList.slice(0, 5).map((t, i) =>
         `<div class="compare-top-team">
           <span class="compare-top-rank">${i + 1}.</span>
           <span class="compare-top-name">${t.name}</span>
-          <span class="compare-top-prob">${formatPct(t.probability)}</span>
+          <span class="compare-top-prob">${formatPct(t.championshipPct != null ? t.championshipPct : t.probability)}</span>
         </div>`
       ).join('');
       topTeamsHtml = `

@@ -3510,6 +3510,30 @@ input:focus:not(:focus-visible) {
   margin-bottom: 0.3rem;
 }
 
+/* ── Pick Sheet Link & Scoring Details ── */
+.pick-sheet-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  margin-left: 0.3rem;
+}
+.pick-sheet-link:hover { text-decoration: underline; }
+
+.picks-scoring-details {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.picks-scoring-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.picks-scoring-details p {
+  margin: 0.4rem 0 0;
+  line-height: 1.5;
+}
+
 /* ══════════════════════════════════════════════════
    COMPARE HINT & MISC
    ══════════════════════════════════════════════════ */

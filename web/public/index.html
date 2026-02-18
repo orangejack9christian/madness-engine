@@ -218,8 +218,8 @@
             <div class="quick-stat-icon">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="currentColor"/></svg>
             </div>
-            <div class="quick-stat-value" id="stat-active-games">0</div>
-            <div class="quick-stat-label">Active Games</div>
+            <div class="quick-stat-value" id="stat-mode-count">--</div>
+            <div class="quick-stat-label">Modes Available</div>
           </div>
           <div class="quick-stat-card">
             <div class="quick-stat-icon">
@@ -502,17 +502,17 @@
                 <th class="col-region sortable" data-sort="region" data-sort-dir="none">Region <span class="sort-icon"></span></th>
                 <th class="col-conf sortable" data-sort="conf" data-sort-dir="none">Conf <span class="sort-icon"></span></th>
                 <th class="col-record sortable" data-sort="record" data-sort-dir="none">Record <span class="sort-icon"></span></th>
-                <th class="col-stat sortable" data-sort="adjoe" data-sort-dir="none">AdjOE <span class="sort-icon"></span></th>
-                <th class="col-stat sortable" data-sort="adjde" data-sort-dir="none">AdjDE <span class="sort-icon"></span></th>
-                <th class="col-stat sortable" data-sort="tempo" data-sort-dir="none">Tempo <span class="sort-icon"></span></th>
-                <th class="col-stat sortable" data-sort="sos" data-sort-dir="none">SOS <span class="sort-icon"></span></th>
-                <th class="col-stat sortable" data-sort="efg" data-sort-dir="none">eFG% <span class="sort-icon"></span></th>
-                <th class="col-stat sortable" data-sort="tov" data-sort-dir="none">TO% <span class="sort-icon"></span></th>
-                <th class="col-stat sortable" data-sort="orb" data-sort-dir="none">OR% <span class="sort-icon"></span></th>
-                <th class="col-stat sortable" data-sort="ftrate" data-sort-dir="none">FT Rate <span class="sort-icon"></span></th>
-                <th class="col-prob sortable" data-sort="champ" data-sort-dir="none">Champ% <span class="sort-icon"></span></th>
-                <th class="col-prob sortable" data-sort="ff" data-sort-dir="none">FF% <span class="sort-icon"></span></th>
-                <th class="col-ew sortable" data-sort="ew" data-sort-dir="none">E[Wins] <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="adjoe" data-sort-dir="none" title="Adjusted Offensive Efficiency — points scored per 100 possessions, adjusted for opponent strength">AdjOE <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="adjde" data-sort-dir="none" title="Adjusted Defensive Efficiency — points allowed per 100 possessions, adjusted for opponent strength (lower is better)">AdjDE <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="tempo" data-sort-dir="none" title="Tempo — possessions per 40 minutes, adjusted for opponent pace">Tempo <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="sos" data-sort-dir="none" title="Strength of Schedule — average quality of opponents faced (higher means tougher schedule)">SOS <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="efg" data-sort-dir="none" title="Effective Field Goal % — shooting efficiency adjusted for 3-pointers being worth more">eFG% <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="tov" data-sort-dir="none" title="Turnover Rate — turnovers per 100 plays (lower is better)">TO% <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="orb" data-sort-dir="none" title="Offensive Rebound % — percentage of available offensive rebounds grabbed">OR% <span class="sort-icon"></span></th>
+                <th class="col-stat sortable" data-sort="ftrate" data-sort-dir="none" title="Free Throw Rate — free throw attempts relative to field goal attempts">FT Rate <span class="sort-icon"></span></th>
+                <th class="col-prob sortable" data-sort="champ" data-sort-dir="none" title="Championship Probability — simulated chance of winning the tournament">Champ% <span class="sort-icon"></span></th>
+                <th class="col-prob sortable" data-sort="ff" data-sort-dir="none" title="Final Four Probability — simulated chance of reaching the Final Four">FF% <span class="sort-icon"></span></th>
+                <th class="col-ew sortable" data-sort="ew" data-sort-dir="none" title="Expected Wins — average number of tournament wins across all simulations">E[Wins] <span class="sort-icon"></span></th>
               </tr>
             </thead>
             <tbody id="teams-tbody">
@@ -536,7 +536,7 @@
     <div class="view-section" id="view-h2h" style="display:none;">
       <div class="h2h-container">
         <div class="h2h-header">
-          <h2 class="h2h-title">Head-to-Head Comparison</h2>
+          <h2 class="h2h-title">Head-to-Head</h2>
           <p class="h2h-subtitle">Select two teams to compare their tournament metrics and probability profiles</p>
         </div>
 
@@ -707,6 +707,10 @@
         <div class="picks-header">
           <h2 class="picks-title">Interactive Pick Sheet</h2>
           <p class="picks-instructions">Click on each matchup to make your pick. Your bracket will be scored in real-time against simulation probabilities. Higher confidence picks earn more points when correct.</p>
+          <details class="picks-scoring-details">
+            <summary>How scoring works</summary>
+            <p>Points increase each round: <strong>R64</strong> = 1 pt, <strong>R32</strong> = 2 pts, <strong>Sweet 16</strong> = 4 pts, <strong>Elite 8</strong> = 8 pts, <strong>Final Four</strong> = 16 pts, <strong>Championship</strong> = 32 pts. Picking a lower-seeded team (upset) earns a seed-difference bonus when correct. Max possible: 192 points.</p>
+          </details>
           <div class="picks-score-display">
             <div class="picks-score-item">
               <span class="picks-score-label">Your Score</span>
@@ -751,7 +755,9 @@
     <div class="view-section" id="view-challenge" style="display:none;">
       <div class="view-content">
         <h2 class="view-title">Bracket Challenge</h2>
-        <p class="view-subtitle">Save your picks and compete on the leaderboard. Make your picks on the Pick Sheet tab first, then submit them here.</p>
+        <p class="view-subtitle">Save your picks and compete on the leaderboard. Make your picks on the Pick Sheet tab first, then submit them here.
+          <a href="#" class="pick-sheet-link" onclick="event.preventDefault(); document.querySelector('[data-view=picks]').click();">Go to Pick Sheet &rarr;</a>
+        </p>
 
         <div class="challenge-submit-section">
           <div>
