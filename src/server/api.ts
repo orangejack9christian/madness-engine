@@ -26,6 +26,7 @@ import { RealTimeLoop } from '../pipeline/real-time-loop';
 import { evaluateMode } from '../evaluation/prediction-logger';
 import { formatCalibration } from '../evaluation/calibration';
 import { updateTeamStats } from '../ingestion/stats-updater';
+import { ingestBracket } from '../ingestion/bracket-ingester';
 import crypto from 'crypto';
 
 // Import all mode implementations
@@ -568,6 +569,34 @@ app.post('/api/update-stats/:type', async (req, res) => {
       success: true,
       teamsLoaded: teams.length,
       teamsUpdated: updateResult.updated,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// === Bracket Ingestion Endpoint (Selection Sunday) ===
+
+app.post('/api/ingest-bracket/:type', async (req, res) => {
+  try {
+    const type = req.params.type as TournamentType;
+    const year = parseInt(req.body?.year) || CONFIG.DEFAULT_YEAR;
+
+    // Pull bracket from ESPN and write team data file
+    const result = await ingestBracket(type, year);
+
+    // Re-load teams from disk and update database
+    const teams = loadTeams(year, type);
+    upsertTeams(teams, year);
+
+    // Invalidate simulation cache
+    cachedResults.clear();
+
+    res.json({
+      success: true,
+      created: result.created,
+      updated: result.updated,
+      total: result.total,
     });
   } catch (e: any) {
     res.status(500).json({ error: e.message });

@@ -14,6 +14,8 @@
     "serve": "tsx src/server/index.ts",
     "update-stats": "tsx src/ingestion/stats-updater.ts",
     "update-stats:womens": "tsx src/ingestion/stats-updater.ts womens",
+    "ingest-bracket": "tsx src/ingestion/bracket-ingester.ts",
+    "ingest-bracket:womens": "tsx src/ingestion/bracket-ingester.ts womens",
     "test": "vitest run",
     "test:watch": "vitest"
   },
