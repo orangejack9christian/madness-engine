@@ -26,6 +26,8 @@ let tableSortDirection = 'asc';
 let pickSelections = {};
 let picksButtonsWired = false;
 let teamColors = {};
+let whatIfMode = false;
+let whatIfLocks = []; // Array of { slotId, winnerId }
 
 // ─── Region Colors ───────────────────────────────────
 const REGION_COLORS = {
@@ -1372,14 +1374,15 @@ function bkTeamHtml(teamInfo, probInfo, round, region) {
   const isWinner = teamInfo._isWinner;
   const isLoser = teamInfo._isLoser;
   const cls = isWinner ? ' bk-winner' : (isLoser ? ' bk-loser' : '');
-  return `<div class="bk-team${cls}">` +
+  const teamId = teamInfo.id || teamInfo.teamId || '';
+  return `<div class="bk-team${cls}" data-team-id="${teamId}">` +
     `<span class="bk-seed" style="color:${regionColor}">${seed}</span>` +
     `<span class="bk-name">${name}</span>` +
     (prob ? `<span class="bk-prob">${prob}</span>` : '') +
     `</div>`;
 }
 
-function bkMatchupHtml(team1Info, team2Info, prob1, prob2, round, region, winnerId) {
+function bkMatchupHtml(team1Info, team2Info, prob1, prob2, round, region, winnerId, slotId) {
   // Tag winner and loser
   if (winnerId) {
     const t1Id = team1Info ? (team1Info.id || team1Info.teamId) : null;
@@ -1397,7 +1400,8 @@ function bkMatchupHtml(team1Info, team2Info, prob1, prob2, round, region, winner
       });
     }
   }
-  return '<div class="bk-matchup">' +
+  var slotAttr = slotId ? ' data-slot-id="' + slotId + '"' : '';
+  return '<div class="bk-matchup"' + slotAttr + '>' +
     bkTeamHtml(team1Info, prob1, round, region) +
     bkTeamHtml(team2Info, prob2, round, region) +
     '</div>';
@@ -1467,7 +1471,9 @@ function renderBkRegionRounds(byRound, teamLookup, probLookup, region, reverse) 
   order.forEach((round, idx) => {
     const slots = byRound[round] || [];
     const cssClass = ROUND_CSS[round] || '';
-    html += `<div class="bk-round ${cssClass}">`;
+    const animDelay = reverse ? (order.length - 1 - idx) : idx;
+    const animClass = animDelay > 0 ? ' bk-animate bk-delay-' + Math.min(animDelay, 5) : ' bk-animate';
+    html += `<div class="bk-round ${cssClass}${animClass}">`;
 
     if (slots.length > 0) {
       slots.forEach(slot => {
@@ -1475,7 +1481,7 @@ function renderBkRegionRounds(byRound, teamLookup, probLookup, region, reverse) 
         const t2 = slot.team2Id ? (teamLookup[slot.team2Id] || probLookup[slot.team2Id]) : null;
         const p1 = slot.team1Id ? probLookup[slot.team1Id] : null;
         const p2 = slot.team2Id ? probLookup[slot.team2Id] : null;
-        html += bkMatchupHtml(t1, t2, p1, p2, round, region, slot.winnerId);
+        html += bkMatchupHtml(t1, t2, p1, p2, round, region, slot.winnerId, slot.slotId);
       });
     } else {
       // Empty placeholders
@@ -1670,7 +1676,7 @@ function renderBracket() {
   html += '<div class="bk-center">';
 
   // Final Four
-  html += '<div class="bk-ff">';
+  html += '<div class="bk-ff bk-animate bk-delay-4">';
   html += '<div class="bk-ff-label">Final Four</div>';
 
   if (ffSlots.length > 0) {
@@ -1680,7 +1686,7 @@ function renderBracket() {
       const p1 = slot.team1Id ? probLookup[slot.team1Id] : null;
       const p2 = slot.team2Id ? probLookup[slot.team2Id] : null;
       const r1 = t1 ? (t1.region || '').toLowerCase() : '';
-      html += bkMatchupHtml(t1, t2, p1, p2, 'final-four', r1, slot.winnerId);
+      html += bkMatchupHtml(t1, t2, p1, p2, 'final-four', r1, slot.winnerId, slot.slotId);
     });
   } else if (lastData && lastData.mostLikelyFinalFour && lastData.mostLikelyFinalFour.length >= 4) {
     // Build 2 predicted FF matchups: East vs West region winners, South vs Midwest region winners
@@ -1723,7 +1729,7 @@ function renderBracket() {
   html += '</div>'; // .bk-ff
 
   // Championship
-  html += '<div class="bk-champ">';
+  html += '<div class="bk-champ bk-animate bk-delay-5">';
   html += '<div class="bk-champ-label">Championship</div>';
 
   if (champSlots.length > 0) {
@@ -1733,7 +1739,7 @@ function renderBracket() {
       const p1 = slot.team1Id ? probLookup[slot.team1Id] : null;
       const p2 = slot.team2Id ? probLookup[slot.team2Id] : null;
       const r1 = t1 ? (t1.region || '').toLowerCase() : '';
-      html += bkMatchupHtml(t1, t2, p1, p2, 'championship', r1, slot.winnerId);
+      html += bkMatchupHtml(t1, t2, p1, p2, 'championship', r1, slot.winnerId, slot.slotId);
     });
   } else if (lastData && lastData.mostLikelyChampion) {
     const champ = probLookup[lastData.mostLikelyChampion];
@@ -1809,9 +1815,19 @@ async function simulateBracket() {
       bracketData = await bracketRes.json();
     }
 
-    // Run simulation
-    const res = await fetch(`${API_BASE}/api/simulate/${currentType}/${modeId}?sims=${sims}`);
-    const data = await res.json();
+    // Run simulation (use whatif endpoint if locks exist)
+    let data;
+    if (whatIfLocks.length > 0) {
+      const whatIfRes = await fetch(`${API_BASE}/api/whatif/${currentType}/${modeId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lockedResults: whatIfLocks, sims: sims }),
+      });
+      data = await whatIfRes.json();
+    } else {
+      const res = await fetch(`${API_BASE}/api/simulate/${currentType}/${modeId}?sims=${sims}`);
+      data = await res.json();
+    }
     lastData = data;
 
     renderBracket();
@@ -1887,6 +1903,74 @@ function setupBracketToolbar() {
       });
       const center = document.querySelector('.bk-center');
       if (center) center.style.display = val === 'all' ? '' : 'none';
+    });
+  }
+
+  // What If mode toggle
+  const whatIfBtn = document.getElementById('btn-whatif-toggle');
+  if (whatIfBtn) {
+    whatIfBtn.addEventListener('click', function() {
+      whatIfMode = !whatIfMode;
+      whatIfBtn.classList.toggle('whatif-active', whatIfMode);
+      whatIfBtn.textContent = whatIfMode ? 'What If: ON' : 'What If';
+
+      // Toggle hover cursor class on bracket container
+      var bracketEl = document.querySelector('.bracket-container');
+      if (bracketEl) bracketEl.classList.toggle('whatif-on', whatIfMode);
+
+      if (!whatIfMode) {
+        // Clear locks when turning off
+        whatIfLocks = [];
+        document.querySelectorAll('.bk-team.bk-locked').forEach(function(el) {
+          el.classList.remove('bk-locked');
+        });
+        showToast('What If mode off — locks cleared', 'info');
+      } else {
+        showToast('What If mode on — click teams to lock winners, then Simulate', 'info');
+      }
+    });
+  }
+
+  // Bracket click-to-lock handler (delegated)
+  if (svgContainer) {
+    svgContainer.addEventListener('click', function(e) {
+      if (!whatIfMode) return;
+
+      var teamEl = e.target.closest('.bk-team');
+      if (!teamEl) return;
+
+      var matchupEl = teamEl.closest('.bk-matchup');
+      if (!matchupEl) return;
+
+      var teamId = teamEl.dataset.teamId;
+      if (!teamId) return;
+
+      // Determine slotId from the matchup context
+      var slotId = matchupEl.dataset.slotId;
+      if (!slotId) return;
+
+      // Toggle lock: if already locked with this winner, unlock; otherwise lock
+      var existingIdx = whatIfLocks.findIndex(function(l) { return l.slotId === slotId; });
+      if (existingIdx >= 0) {
+        if (whatIfLocks[existingIdx].winnerId === teamId) {
+          // Unlock
+          whatIfLocks.splice(existingIdx, 1);
+          matchupEl.querySelectorAll('.bk-team').forEach(function(t) { t.classList.remove('bk-locked'); });
+          showToast('Lock removed', 'info');
+        } else {
+          // Switch lock to other team
+          whatIfLocks[existingIdx].winnerId = teamId;
+          matchupEl.querySelectorAll('.bk-team').forEach(function(t) {
+            t.classList.toggle('bk-locked', t.dataset.teamId === teamId);
+          });
+          showToast('Winner locked', 'success');
+        }
+      } else {
+        // New lock
+        whatIfLocks.push({ slotId: slotId, winnerId: teamId });
+        teamEl.classList.add('bk-locked');
+        showToast('Winner locked — ' + whatIfLocks.length + ' lock(s) set', 'success');
+      }
     });
   }
 }
@@ -4205,10 +4289,21 @@ function setupThemeToggle() {
   var btn = document.getElementById('theme-toggle');
   if (!btn) return;
 
-  // Restore saved theme
+  // Restore saved theme, or auto-detect from system preference
   var saved = localStorage.getItem('madness-theme');
-  if (saved === 'light') {
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
     document.documentElement.setAttribute('data-theme', 'light');
+  }
+
+  // Listen for system theme changes (only if user hasn't manually picked)
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e) {
+      if (!localStorage.getItem('madness-theme')) {
+        document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
+      }
+    });
   }
 
   btn.addEventListener('click', function() {

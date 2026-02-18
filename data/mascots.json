@@ -350,7 +350,7 @@
     "intimidationFactor": 9,
     "specialAbility": "Crushing bear maul"
   },
-  "St. Mary's Gaels": {
+  "Saint Mary's Gaels": {
     "name": "Gael",
     "combatRating": 65,
     "size": "medium",
@@ -359,7 +359,7 @@
     "intimidationFactor": 6,
     "specialAbility": "Celtic warrior fury"
   },
-  "Miami FL Hurricanes": {
+  "Miami Hurricanes": {
     "name": "Hurricane",
     "combatRating": 90,
     "size": "massive",
@@ -404,7 +404,7 @@
     "intimidationFactor": 6,
     "specialAbility": "Wild buck kick"
   },
-  "Miami OH RedHawks": {
+  "Miami (OH) RedHawks": {
     "name": "RedHawk",
     "combatRating": 58,
     "size": "medium",

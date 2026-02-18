@@ -1335,6 +1335,30 @@ input:focus-visible {
   padding: 2px 0;
 }
 
+/* Animated bracket reveal — rounds fade in with staggered delay */
+@keyframes bracketRoundReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.bk-round.bk-animate {
+  opacity: 0;
+  animation: bracketRoundReveal 0.35s ease forwards;
+}
+.bk-round.bk-animate.bk-delay-1 { animation-delay: 0.08s; }
+.bk-round.bk-animate.bk-delay-2 { animation-delay: 0.20s; }
+.bk-round.bk-animate.bk-delay-3 { animation-delay: 0.35s; }
+.bk-round.bk-animate.bk-delay-4 { animation-delay: 0.50s; }
+.bk-round.bk-animate.bk-delay-5 { animation-delay: 0.65s; }
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .bk-round.bk-animate {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ── Matchup Card ── */
 .bk-matchup {
   display: flex;
@@ -1372,6 +1396,29 @@ input:focus-visible {
 }
 
 .bk-team.bk-winner .bk-name { font-weight: 700; }
+
+/* What If mode — locked team highlight */
+.bk-team.bk-locked {
+  background: rgba(59, 130, 246, 0.15);
+  box-shadow: inset 2px 0 0 var(--accent);
+  cursor: pointer;
+}
+.bk-team.bk-locked .bk-name { font-weight: 700; color: var(--accent); }
+
+.whatif-active {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
+
+/* Clickable teams in What If mode */
+.bracket-container.whatif-on .bk-team:not(.bk-tbd) {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.bracket-container.whatif-on .bk-team:not(.bk-tbd):hover {
+  background: rgba(59, 130, 246, 0.08);
+}
 
 .bk-seed {
   font-family: 'JetBrains Mono', monospace;
@@ -3783,4 +3830,74 @@ input:focus:not(:focus-visible) {
   color: var(--accent-bright);
   font-weight: 700;
   margin-right: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRINT STYLES — bracket-friendly output for office pools
+   ═══════════════════════════════════════════════════════ */
+@media print {
+  /* Hide everything except the bracket */
+  .top-nav, .mode-bar, .nav-tabs-container, .bracket-toolbar,
+  .team-detail-panel, .team-detail-backdrop, .compare-bar,
+  .toast-container, footer, .hamburger-btn { display: none !important; }
+
+  /* Show only the bracket view */
+  .view-section { display: none !important; }
+  #view-bracket { display: block !important; }
+
+  /* Reset bracket viewport for full-page print */
+  .bracket-viewport {
+    overflow: visible !important;
+    border: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .bracket-svg-container {
+    transform: none !important;
+    width: 100% !important;
+  }
+  .bracket-container {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  /* Light background for print */
+  :root, [data-theme="dark"], [data-theme="light"] {
+    --bg-primary: #fff !important;
+    --bg-secondary: #fff !important;
+    --bg-card: #fff !important;
+    --text-primary: #000 !important;
+    --text-secondary: #333 !important;
+    --text-tertiary: #666 !important;
+    --border: #ccc !important;
+  }
+
+  body { background: #fff !important; color: #000 !important; }
+
+  /* Make matchups legible */
+  .bk-matchup {
+    border: 1px solid #999 !important;
+    break-inside: avoid;
+  }
+  .bk-team { color: #000 !important; }
+  .bk-team.bk-winner { font-weight: 700; }
+  .bk-team.bk-loser { opacity: 0.5; }
+
+  /* No animations in print */
+  .bk-round.bk-animate { animation: none !important; opacity: 1 !important; transform: none !important; }
+
+  /* Add print header */
+  #view-bracket::before {
+    content: 'MadnessEngine 2026 — Tournament Bracket';
+    display: block;
+    font-size: 18pt;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 12pt;
+  }
+
+  @page {
+    size: landscape;
+    margin: 0.5in;
+  }
 }
