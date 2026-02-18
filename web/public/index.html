@@ -26,11 +26,21 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles.css">
   <!-- PostHog Analytics (free tier: 1M events/month) -->
+  <!-- To activate: replace phc_YOUR_PROJECT_API_KEY with your key from https://app.posthog.com/settings/project -->
   <script>
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host.replace(/\/$/,"")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-    // TODO: Replace YOUR_PROJECT_KEY with your PostHog project API key from https://app.posthog.com
-    // posthog.init('YOUR_PROJECT_KEY',{api_host:'https://us.i.posthog.com', person_profiles: 'always'})
+    posthog.init('phc_YOUR_PROJECT_API_KEY', {
+      api_host: 'https://us.i.posthog.com',
+      person_profiles: 'always',
+      capture_pageview: true,
+      capture_pageleave: true,
+      autocapture: false,
+    });
   </script>
+  <!-- Google AdSense — Replace ca-pub-XXXXXXXXXXXXXXXX with your publisher ID -->
+  <!-- Get your pub ID from https://www.google.com/adsense/ after approval -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+     crossorigin="anonymous"></script>
 </head>
 <body>
   <!-- Top Navigation -->
@@ -221,10 +231,16 @@
           </div>
         </section>
 
-        <!-- Ad Placeholder: Inline Banner -->
-        <div class="ad-placeholder ad-inline-banner" id="ad-inline-banner">
-          <span class="ad-placeholder-label">Ad Space — Responsive Banner</span>
-          <!-- Replace with your ad network code (AdSense, Adsterra, etc.) -->
+        <!-- Google AdSense: Inline Responsive Banner -->
+        <!-- This ad unit will auto-size. Replace data-ad-slot with your unit ID from AdSense. -->
+        <div class="ad-container ad-inline-banner" id="ad-inline-banner">
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+               data-ad-slot="XXXXXXXXXX"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
         </div>
 
         <!-- Championship Odds Table -->
@@ -788,10 +804,16 @@
 
   </main>
 
-  <!-- Ad Placeholder: Bottom Banner -->
-  <div class="ad-placeholder ad-bottom-banner" id="ad-bottom-banner">
-    <span class="ad-placeholder-label">Ad Space — 728x90</span>
-    <!-- Replace with your ad network code (AdSense, Adsterra, etc.) -->
+  <!-- Google AdSense: Bottom Banner (728x90 on desktop, responsive on mobile) -->
+  <!-- Replace data-ad-slot with your unit ID from AdSense. -->
+  <div class="ad-container ad-bottom-banner" id="ad-bottom-banner">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+         data-ad-slot="XXXXXXXXXX"
+         data-ad-format="horizontal"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
   </div>
 
   <!-- Footer -->

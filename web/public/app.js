@@ -219,9 +219,11 @@ function setupTournamentToggle() {
       document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentType = btn.dataset.type;
+      trackEvent('tournament_type_switch', { type: currentType });
       // Clear cached data
       lastData = null;
       bracketData = null;
+      cachedActualResults = null;
       allTeams = [];
       clearCompareSelection();
       loadTeams();
@@ -1933,6 +1935,130 @@ function renderBracket() {
   html += '</div>'; // .bk-wrapper
 
   container.innerHTML = html;
+
+  // After rendering, overlay actual results if available
+  overlayActualResults();
+}
+
+/**
+ * Fetch actual tournament results and overlay accuracy indicators on bracket matchups.
+ * Shows ✓ or ✗ on each matchup where actual outcomes are known.
+ */
+let cachedActualResults = null;
+
+async function overlayActualResults() {
+  // Fetch results (cache for the session)
+  if (!cachedActualResults) {
+    try {
+      const res = await fetch(`${API_BASE}/api/results/${currentType}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        cachedActualResults = data;
+      } else {
+        return; // No actual results yet
+      }
+    } catch (e) {
+      return; // API unavailable or tournament hasn't started
+    }
+  }
+
+  if (!cachedActualResults || cachedActualResults.length === 0) return;
+
+  const container = document.getElementById('bracket-svg');
+  if (!container) return;
+
+  // Build lookup of actual results by game_id and by team matchup
+  const actualByTeams = {};
+  cachedActualResults.forEach(function(r) {
+    // Key by both team IDs (sorted) for matching
+    var key = [r.team1_id, r.team2_id].sort().join('|');
+    actualByTeams[key] = r;
+  });
+
+  let correct = 0;
+  let incorrect = 0;
+  let total = 0;
+
+  // Iterate all matchups in the bracket
+  container.querySelectorAll('.bk-matchup').forEach(function(matchupEl) {
+    var teams = matchupEl.querySelectorAll('.bk-team');
+    if (teams.length < 2) return;
+
+    var t1Id = teams[0].dataset.teamId;
+    var t2Id = teams[1].dataset.teamId;
+    if (!t1Id || !t2Id) return;
+
+    // Find actual result for this matchup
+    var key = [t1Id, t2Id].sort().join('|');
+    var actual = actualByTeams[key];
+    if (!actual) return;
+
+    total++;
+
+    // Determine the bracket's predicted winner (the team with .bk-winner class)
+    var predictedWinner = null;
+    teams.forEach(function(el) {
+      if (el.classList.contains('bk-winner')) {
+        predictedWinner = el.dataset.teamId;
+      }
+    });
+
+    // If no explicit winner marked, use higher probability team
+    if (!predictedWinner) {
+      var prob1El = teams[0].querySelector('.bk-prob');
+      var prob2El = teams[1].querySelector('.bk-prob');
+      if (prob1El && prob2El) {
+        var p1 = parseFloat(prob1El.textContent) || 0;
+        var p2 = parseFloat(prob2El.textContent) || 0;
+        predictedWinner = p1 >= p2 ? t1Id : t2Id;
+      } else {
+        predictedWinner = t1Id; // Default to top seed
+      }
+    }
+
+    var isCorrect = predictedWinner === actual.winner_id;
+    if (isCorrect) {
+      correct++;
+    } else {
+      incorrect++;
+    }
+
+    // Add visual indicator
+    var badge = document.createElement('div');
+    badge.className = 'bk-accuracy-badge ' + (isCorrect ? 'bk-accuracy-correct' : 'bk-accuracy-incorrect');
+    badge.textContent = isCorrect ? '\u2713' : '\u2717';
+    badge.title = isCorrect ? 'Prediction correct!' : 'Prediction wrong — actual winner: ' + actual.winner_id;
+    matchupEl.style.position = 'relative';
+    matchupEl.appendChild(badge);
+
+    // Also highlight the actual winner team element
+    teams.forEach(function(el) {
+      if (el.dataset.teamId === actual.winner_id) {
+        el.classList.add('bk-actual-winner');
+      }
+    });
+  });
+
+  // Show accuracy summary banner if we have results
+  if (total > 0) {
+    var pct = ((correct / total) * 100).toFixed(0);
+    var banner = document.getElementById('bracket-accuracy-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'bracket-accuracy-banner';
+      banner.className = 'bracket-accuracy-banner';
+      var toolbar = document.querySelector('.bracket-toolbar');
+      if (toolbar) {
+        toolbar.parentNode.insertBefore(banner, toolbar.nextSibling);
+      }
+    }
+    banner.innerHTML =
+      '<span class="accuracy-icon">' + (correct >= incorrect ? '\u2705' : '\u26A0\uFE0F') + '</span> ' +
+      '<strong>' + correct + '/' + total + '</strong> predictions correct (' + pct + '% accuracy)' +
+      '<span class="accuracy-breakdown"> — ' + correct + ' right, ' + incorrect + ' wrong</span>';
+    banner.style.display = '';
+    trackEvent('bracket_accuracy_view', { correct: correct, total: total, pct: pct });
+  }
 }
 
 
@@ -2109,6 +2235,7 @@ function setupBracketToolbar() {
         showToast('What If mode on — click teams to lock winners, then Simulate', 'info');
       }
       updateWhatIfBadge();
+      trackEvent('whatif_toggle', { enabled: whatIfMode });
     });
   }
 
@@ -2201,6 +2328,7 @@ function setupBracketToolbar() {
         link.href = finalCanvas.toDataURL('image/png');
         link.click();
         showToast('Bracket image downloaded', 'success');
+        trackEvent('bracket_export_image', { type: currentType });
       } catch (err) {
         console.error('Export failed:', err);
         showToast('Export failed — try again', 'warning');
@@ -2286,6 +2414,7 @@ function setupBracketToolbar() {
       list.unshift(entry);
       saveBrackets(list);
       showToast('Bracket saved: ' + name, 'success');
+      trackEvent('bracket_save', { type: currentType, totalSaved: list.length });
     });
   }
 
@@ -2838,7 +2967,7 @@ function setupPicksButtons() {
   }
 }
 
-function calculatePickScore() {
+async function calculatePickScore() {
   if (!lastData || !lastData.rawResults) return;
 
   const resultContainer = document.getElementById('pick-score-result');
@@ -2857,10 +2986,8 @@ function calculatePickScore() {
   picks.forEach(teamId => {
     const team = lastData.rawResults.find(t => t.teamId === teamId);
     if (team) {
-      // Score based on how good the pick is according to simulation
       const r32Prob = team.roundProbabilities ? (team.roundProbabilities['round-of-32'] || 0) : 0;
       totalScore += r32Prob * 100;
-
       if (team.seed >= 9) upsetPicks++;
     }
   });
@@ -2871,6 +2998,63 @@ function calculatePickScore() {
                 avgConfidence >= 50 ? 'C' :
                 avgConfidence >= 35 ? 'D' : 'F';
 
+  // Check against actual tournament results if available
+  let actualHtml = '';
+  try {
+    if (!cachedActualResults) {
+      const res = await fetch(`${API_BASE}/api/results/${currentType}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        cachedActualResults = data;
+      }
+    }
+    if (cachedActualResults && cachedActualResults.length > 0) {
+      // Build set of actual winners
+      var actualWinners = {};
+      cachedActualResults.forEach(function(r) {
+        actualWinners[r.winner_id] = r.round;
+      });
+
+      var correctPicks = 0;
+      var wrongPicks = 0;
+      var pendingPicks = 0;
+      picks.forEach(function(teamId) {
+        if (actualWinners[teamId]) {
+          correctPicks++;
+        } else {
+          // Check if this team appeared as a loser in any actual result
+          var lost = cachedActualResults.some(function(r) {
+            return (r.team1_id === teamId || r.team2_id === teamId) && r.winner_id !== teamId;
+          });
+          if (lost) {
+            wrongPicks++;
+          } else {
+            pendingPicks++;
+          }
+        }
+      });
+
+      var realGrade = correctPicks >= totalPicks * 0.8 ? 'A' :
+                      correctPicks >= totalPicks * 0.65 ? 'B' :
+                      correctPicks >= totalPicks * 0.5 ? 'C' :
+                      correctPicks >= totalPicks * 0.35 ? 'D' : 'F';
+
+      actualHtml = `
+        <div class="pick-score-actual">
+          <div class="pick-score-actual-header">vs. Actual Results</div>
+          <div class="pick-score-actual-grade">${realGrade}</div>
+          <div class="pick-score-actual-details">
+            <div><span class="pick-correct-dot"></span> <strong>Correct:</strong> ${correctPicks}</div>
+            <div><span class="pick-wrong-dot"></span> <strong>Wrong:</strong> ${wrongPicks}</div>
+            ${pendingPicks > 0 ? '<div><span class="pick-pending-dot"></span> <strong>Pending:</strong> ' + pendingPicks + '</div>' : ''}
+          </div>
+        </div>`;
+      trackEvent('picks_score_actual', { correct: correctPicks, wrong: wrongPicks, pending: pendingPicks });
+    }
+  } catch (e) {
+    // No actual results available, that's fine
+  }
+
   resultContainer.innerHTML = `
     <div class="pick-score-card">
       <div class="pick-score-grade">${grade}</div>
@@ -2880,6 +3064,7 @@ function calculatePickScore() {
         <div><strong>Upset Picks:</strong> ${upsetPicks}</div>
       </div>
     </div>
+    ${actualHtml}
   `;
 }
 
