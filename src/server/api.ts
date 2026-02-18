@@ -27,6 +27,7 @@ import { evaluateMode } from '../evaluation/prediction-logger';
 import { formatCalibration } from '../evaluation/calibration';
 import { updateTeamStats } from '../ingestion/stats-updater';
 import { ingestBracket } from '../ingestion/bracket-ingester';
+import { startBracketScheduler, getSchedulerState } from '../ingestion/bracket-scheduler';
 import crypto from 'crypto';
 
 // Import all mode implementations
@@ -603,6 +604,12 @@ app.post('/api/ingest-bracket/:type', async (req, res) => {
   }
 });
 
+// === Scheduler Status Endpoint ===
+
+app.get('/api/scheduler-status', (_req, res) => {
+  res.json(getSchedulerState());
+});
+
 // SPA fallback
 app.get('/{*splat}', (_req, res) => {
   res.sendFile(path.resolve(__dirname, '..', '..', 'web', 'public', 'index.html'));
@@ -663,6 +670,13 @@ export function startServer(port: number = 3000, options: ServerOptions = {}): v
     poller.start();
   }
 
+  // Start bracket auto-check scheduler (active during March-April)
+  startBracketScheduler(
+    CONFIG.DEFAULT_TOURNAMENT_TYPE,
+    CONFIG.DEFAULT_YEAR,
+    () => cachedResults.clear(),
+  );
+
   server.listen(port, () => {
     console.log(`\n  March Madness Simulator`);
     console.log(`  Dashboard:  http://localhost:${port}`);
@@ -670,6 +684,7 @@ export function startServer(port: number = 3000, options: ServerOptions = {}): v
     console.log(`  Live Input: http://localhost:${port}/api/live`);
     if (options.enableESPN) console.log(`  ESPN Poll:  Active (${CONFIG.POLL_INTERVAL_MS}ms)`);
     if (options.enableLiveLoop) console.log(`  Live Loop:  Active (mode: ${CONFIG.ACTIVE_MODES[0]})`);
+    console.log(`  Auto-Update: Active (bracket + stats every 4h during March)`);
     console.log(`  Press Ctrl+C to stop.\n`);
   });
 }
