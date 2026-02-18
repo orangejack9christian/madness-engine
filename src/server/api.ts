@@ -641,6 +641,14 @@ app.get('/api/scheduler-status', (_req, res) => {
   res.json(getSchedulerState());
 });
 
+// Explicit routes for SEO/verification files (ensure they're not caught by SPA fallback)
+app.get('/sitemap.xml', (_req, res) => {
+  res.sendFile(path.resolve(__dirname, '..', '..', 'web', 'public', 'sitemap.xml'));
+});
+app.get('/robots.txt', (_req, res) => {
+  res.sendFile(path.resolve(__dirname, '..', '..', 'web', 'public', 'robots.txt'));
+});
+
 // SPA fallback
 app.get('/{*splat}', (_req, res) => {
   res.sendFile(path.resolve(__dirname, '..', '..', 'web', 'public', 'index.html'));
