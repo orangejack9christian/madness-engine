@@ -96,6 +96,8 @@ app.get('/api/teams/:type', (req, res) => {
       region: t.region,
       conference: t.conference,
       metrics: t.metrics,
+      coaching: t.coaching || null,
+      mascot: t.mascot || null,
     })));
   } catch (e: any) {
     res.status(404).json({ error: e.message });

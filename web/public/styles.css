@@ -1894,6 +1894,13 @@ input:focus-visible {
 
 .h2h-chart-container { height: 300px; }
 
+.h2h-edge-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
 /* H2H Win Probability Bar */
 .h2h-win-bar {
   display: flex;

@@ -24,6 +24,7 @@ let currentView = 'dashboard';
 let tableSortColumn = 'rank';
 let tableSortDirection = 'asc';
 let pickSelections = {};
+let picksButtonsWired = false;
 let teamColors = {};
 
 // ─── Region Colors ───────────────────────────────────
@@ -102,6 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupTeamCompare();
   setupThemeToggle();
   setupHamburgerMenu();
+  setupShareButton();
 
   await loadTeamColors();
   await loadModes();
@@ -372,6 +374,9 @@ function renderDashboard(data) {
 
   // Hot Takes — bold predictions from the engine
   renderHotTakes(rawResults, data);
+
+  // Upset Alerts — first-round upsets with >30% probability
+  renderUpsetAlerts(rawResults);
 
   // Show compare section if multiple modes
   const compareSection = document.getElementById('compare-section');
@@ -677,6 +682,59 @@ function renderHotTakes(rawResults, data) {
   ).join('');
 }
 
+function renderUpsetAlerts(rawResults) {
+  var container = document.getElementById('upset-alerts-list');
+  if (!container || !rawResults) return;
+
+  var seedMatchups = [[1,16],[2,15],[3,14],[4,13],[5,12],[6,11],[7,10],[8,9]];
+  var regions = ['east','west','south','midwest'];
+  var alerts = [];
+
+  regions.forEach(function(region) {
+    seedMatchups.forEach(function(pair) {
+      var favSeed = pair[0], dogSeed = pair[1];
+      var fav = rawResults.find(function(t) {
+        return (t.region || '').toLowerCase() === region && t.seed === favSeed;
+      });
+      var dog = rawResults.find(function(t) {
+        return (t.region || '').toLowerCase() === region && t.seed === dogSeed;
+      });
+      if (!fav || !dog) return;
+
+      var dogWinPct = dog.roundProbabilities ? (dog.roundProbabilities['round-of-32'] || 0) : 0;
+      if (dogWinPct > 0.30) {
+        alerts.push({
+          favName: fav.teamName, favSeed: favSeed,
+          dogName: dog.teamName, dogSeed: dogSeed,
+          dogWinPct: dogWinPct,
+          region: region,
+        });
+      }
+    });
+  });
+
+  alerts.sort(function(a, b) { return b.dogWinPct - a.dogWinPct; });
+
+  if (alerts.length === 0) {
+    container.innerHTML = '<div class="insights-empty">No significant upset alerts in this simulation</div>';
+    return;
+  }
+
+  container.innerHTML = alerts.map(function(a) {
+    var pctDisplay = (a.dogWinPct * 100).toFixed(1);
+    return '<div class="cinderella-item">' +
+      '<span class="cinderella-seed">#' + a.dogSeed + '</span>' +
+      '<span class="cinderella-name">' + a.dogName + '</span>' +
+      '<span style="color:var(--text-tertiary);font-size:0.75rem;margin:0 0.3rem;">over</span>' +
+      '<span class="cinderella-seed">#' + a.favSeed + '</span>' +
+      '<span class="cinderella-name">' + a.favName + '</span>' +
+      '<span class="cinderella-stat" style="margin-left:auto;">' + pctDisplay + '%' +
+        '<div class="cinderella-stat-label">' + capitalize(a.region) + '</div>' +
+      '</span>' +
+    '</div>';
+  }).join('');
+}
+
 // ═══════════════════════════════════════════════════════
 // SECTION 6: FINAL FOUR
 // ═══════════════════════════════════════════════════════
@@ -955,8 +1013,8 @@ function showTeamDetail(teamId) {
   if (!team) return;
 
   var m = team.metrics || {};
-  var cp = team.coachingProfile || null;
-  var mp = team.mascotProfile || null;
+  var cp = team.coaching || null;
+  var mp = team.mascot || null;
   var regionColor = REGION_COLORS[(team.region || '').toLowerCase()] || '#666';
 
   // Find simulation data
@@ -1127,6 +1185,15 @@ function showTeamDetail(teamId) {
     '</div>' +
   '</div>';
 
+  // ── Section 7: Mode Variance Analysis ──
+  var modeAnalysisHtml = '<div class="td-section">' +
+    '<h3 class="td-section-title">Mode Breakdown</h3>' +
+    '<div id="td-mode-analysis" style="min-height:50px;">' +
+      '<button class="btn-compare" id="td-load-mode-analysis" style="font-size:0.78rem;padding:0.35rem 0.8rem;">Load Mode Analysis</button>' +
+      '<p style="font-size:0.72rem;color:var(--text-tertiary);margin-top:0.4rem;">Championship % across all simulation modes</p>' +
+    '</div>' +
+  '</div>';
+
   // ── Assemble panel HTML ──
   var isInCompare = compareSelectedTeams.indexOf(teamId) >= 0;
   var compareBtnLabel = isInCompare ? 'Remove from Compare' : 'Add to Compare';
@@ -1150,6 +1217,7 @@ function showTeamDetail(teamId) {
       statsHtml +
       coachHtml +
       mascotHtml +
+      modeAnalysisHtml +
     '</div>';
 
   // Show panel with animation
@@ -1177,6 +1245,42 @@ function showTeamDetail(teamId) {
       // Update button text
       var nowIn = compareSelectedTeams.indexOf(teamId) >= 0;
       tdCompareBtn.textContent = nowIn ? 'Remove from Compare' : 'Add to Compare';
+    };
+  }
+
+  // Mode analysis button handler
+  var loadModeBtn = document.getElementById('td-load-mode-analysis');
+  if (loadModeBtn) {
+    loadModeBtn.onclick = async function() {
+      loadModeBtn.textContent = 'Loading...';
+      loadModeBtn.disabled = true;
+      try {
+        var res = await fetch(API_BASE + '/api/compare/' + currentType + '?sims=2000');
+        var comparisons = await res.json();
+        var modeData = comparisons.map(function(comp) {
+          var teamEntry = comp.top10.find(function(t) { return t.name === team.name; });
+          return {
+            modeName: comp.modeName,
+            champPct: teamEntry ? teamEntry.championshipPct * 100 : 0,
+          };
+        }).sort(function(a, b) { return b.champPct - a.champPct; });
+
+        var maxPct = Math.max.apply(null, modeData.map(function(d) { return d.champPct; })) || 1;
+        var barsHtml = modeData.map(function(d) {
+          var barWidth = (d.champPct / maxPct * 100).toFixed(1);
+          return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;">' +
+            '<span style="width:120px;font-size:0.72rem;color:var(--text-secondary);text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + d.modeName + '</span>' +
+            '<div style="flex:1;height:14px;background:var(--bg-elevated);border-radius:4px;overflow:hidden;">' +
+              '<div style="height:100%;width:' + barWidth + '%;background:var(--accent);border-radius:4px;transition:width 0.3s;"></div>' +
+            '</div>' +
+            '<span style="width:50px;font-size:0.72rem;color:var(--text-tertiary);text-align:right;">' + d.champPct.toFixed(1) + '%</span>' +
+          '</div>';
+        }).join('');
+
+        document.getElementById('td-mode-analysis').innerHTML = barsHtml;
+      } catch (e) {
+        document.getElementById('td-mode-analysis').innerHTML = '<p style="color:var(--text-tertiary);font-size:0.78rem;">Failed to load mode analysis</p>';
+      }
     };
   }
 
@@ -2014,6 +2118,35 @@ function renderH2HResults(data) {
     });
   }
 
+  // Mode edge summary: count wins per team across all modes
+  if (modeResults && modeResults.length > 0) {
+    let team1ModeWins = 0, team2ModeWins = 0, modeTies = 0;
+    modeResults.forEach(function(mr) {
+      const c1 = mr.team1 ? mr.team1.championshipProbability || 0 : 0;
+      const c2 = mr.team2 ? mr.team2.championshipProbability || 0 : 0;
+      if (c1 > c2) team1ModeWins++;
+      else if (c2 > c1) team2ModeWins++;
+      else modeTies++;
+    });
+
+    const summaryContainer = document.getElementById('h2h-edge-summary');
+    if (summaryContainer) {
+      summaryContainer.innerHTML =
+        '<div class="h2h-edge-card" style="text-align:center;">' +
+          '<div style="font-size:1.4rem;font-weight:700;color:' + t1Color + ';">' + team1ModeWins + '</div>' +
+          '<div style="font-size:0.75rem;color:var(--text-tertiary);">modes favor ' + t1Name + '</div>' +
+        '</div>' +
+        '<div class="h2h-edge-card" style="text-align:center;">' +
+          '<div style="font-size:1.4rem;font-weight:700;color:var(--text-secondary);">' + modeTies + '</div>' +
+          '<div style="font-size:0.75rem;color:var(--text-tertiary);">even</div>' +
+        '</div>' +
+        '<div class="h2h-edge-card" style="text-align:center;">' +
+          '<div style="font-size:1.4rem;font-weight:700;color:' + t2Color + ';">' + team2ModeWins + '</div>' +
+          '<div style="font-size:0.75rem;color:var(--text-tertiary);">modes favor ' + t2Name + '</div>' +
+        '</div>';
+    }
+  }
+
   // Create Chart.js bar chart
   if (modeResults && modeResults.length > 0 && typeof Chart !== 'undefined') {
     const chartCanvas = document.getElementById('h2h-chart');
@@ -2148,6 +2281,8 @@ function initPickSheet() {
 }
 
 function setupPicksButtons() {
+  if (picksButtonsWired) return;
+  picksButtonsWired = true;
   const seedMatchups = [[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
   const regions = ['east','west','south','midwest'];
   const rawResults = (lastData && lastData.rawResults) ? lastData.rawResults : [];
@@ -3810,7 +3945,7 @@ function openCompareOverlay() {
     }
 
     // Coaching info if available
-    var cp = t.coachingProfile;
+    var cp = t.coaching;
     if (cp) {
       columnsHtml += '<div class="cmp-stat-row" style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.35rem;">' +
         '<span class="cmp-stat-label">Coach</span>' +
@@ -4089,6 +4224,45 @@ function setupThemeToggle() {
 // ═══════════════════════════════════════════════════════
 // SECTION 20: MOBILE HAMBURGER MENU
 // ═══════════════════════════════════════════════════════
+
+function setupShareButton() {
+  var btn = document.getElementById('btn-share-bracket');
+  if (!btn) return;
+  btn.addEventListener('click', function() {
+    if (!lastData || !lastData.rawResults) {
+      showToast('Run a simulation first', 'warning');
+      return;
+    }
+    var results = lastData.rawResults.slice().sort(function(a, b) {
+      return (b.championshipProbability || 0) - (a.championshipProbability || 0);
+    });
+    var mode = modes.find(function(m) { return m.id === currentMode; });
+    var modeName = mode ? mode.name : currentMode;
+    var champ = results[0];
+
+    var lines = [
+      'MadnessEngine 2026 Prediction',
+      'Mode: ' + modeName,
+      '',
+      'Predicted Champion: ' + champ.teamName + ' (' + champ.seed + '-seed)',
+      'Championship Odds: ' + (champ.championshipProbability * 100).toFixed(1) + '%',
+      '',
+      'Top 5:',
+    ];
+    results.slice(0, 5).forEach(function(t, i) {
+      lines.push((i + 1) + '. ' + t.teamName + ' (' + t.seed + ') - ' + (t.championshipProbability * 100).toFixed(1) + '%');
+    });
+    lines.push('');
+    lines.push('https://madness-engine.onrender.com');
+
+    navigator.clipboard.writeText(lines.join('\n')).then(function() {
+      trackEvent('share_bracket', { mode: currentMode });
+      showToast('Results copied to clipboard!', 'success');
+    }).catch(function() {
+      showToast('Failed to copy to clipboard', 'warning');
+    });
+  });
+}
 
 function setupHamburgerMenu() {
   var btn = document.getElementById('hamburger-btn');
