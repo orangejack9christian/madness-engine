@@ -1025,6 +1025,47 @@ input:focus-visible {
 .btn-compare:hover { background: var(--accent-bright); transform: translateY(-1px); }
 .btn-compare:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+/* Consensus Panel */
+.consensus-panel {
+  padding: 1.15rem;
+  border-bottom: 1px solid var(--border);
+}
+.consensus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+.consensus-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem;
+  text-align: center;
+}
+.consensus-card-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1.2;
+}
+.consensus-card-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.consensus-card-detail {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 0.35rem;
+}
+
+.compare-chart-container {
+  padding: 1.15rem;
+  border-bottom: 1px solid var(--border);
+}
+
 .compare-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -2349,6 +2390,44 @@ input:focus-visible {
 
 .live-team.winning .live-team-name { color: var(--text-primary); font-weight: 700; }
 .live-team.winning .live-team-score { color: var(--accent-bright); }
+
+.live-team-seed {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-right: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.live-game-card.game-upset {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.live-upset-tag {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.15);
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 0.4rem;
+  animation: upsetPulse 1.5s ease infinite;
+}
+@keyframes upsetPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.live-game-prediction {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  padding: 4px 8px 2px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
 
 /* ══════════════════════════════════════════════════
    TEAM MODAL (OVERLAY)

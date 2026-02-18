@@ -122,6 +122,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   connectWebSocket();
+
+  // Load global sim counter
+  fetch(`${API_BASE}/api/stats`).then(r => r.json()).then(d => {
+    if (d.globalSimCount) updateSimCounter(d.globalSimCount);
+  }).catch(() => {});
 });
 
 function setupNavigation() {
@@ -367,6 +372,7 @@ function renderDashboard(data) {
   setTextContent('stat-volatility', (volatilityIndex * 100).toFixed(2));
   setTextContent('stat-upset', report.biggestUpset || 'None');
   setTextContent('stat-time', new Date(report.generatedAt).toLocaleTimeString());
+  if (data.globalSimCount) updateSimCounter(data.globalSimCount);
 
   const mode = modes.find(m => m.id === currentMode);
   setTextContent('stat-mode-cat', mode ? capitalize(mode.category) : '--');
@@ -802,10 +808,168 @@ async function runComparison() {
   }
 }
 
+function renderConsensus(comparisons) {
+  var panel = document.getElementById('consensus-panel');
+  var gridEl = document.getElementById('consensus-grid');
+  if (!panel || !gridEl) return;
+
+  // Count champion picks
+  var champCounts = {};
+  var ffCounts = {};
+  comparisons.forEach(function(comp) {
+    if (comp.champion) {
+      var name = comp.champion.name;
+      champCounts[name] = (champCounts[name] || 0) + 1;
+    }
+    if (comp.finalFour) {
+      comp.finalFour.forEach(function(t) {
+        ffCounts[t.name] = (ffCounts[t.name] || 0) + 1;
+      });
+    }
+  });
+
+  var total = comparisons.length;
+  var champArr = Object.entries(champCounts).sort(function(a, b) { return b[1] - a[1]; });
+  var ffArr = Object.entries(ffCounts).sort(function(a, b) { return b[1] - a[1]; });
+
+  // Consensus champion
+  var topChamp = champArr[0] || ['--', 0];
+  var champPct = Math.round((topChamp[1] / total) * 100);
+
+  // Unanimous FF (in all modes)
+  var unanimousFF = ffArr.filter(function(e) { return e[1] === total; }).map(function(e) { return e[0]; });
+
+  // Most controversial: teams that are champion in some modes but not even top-5 in others
+  var controversialTeams = champArr.filter(function(e) { return e[1] >= 2 && e[1] <= total * 0.5; });
+
+  var html = '';
+  html += '<div class="consensus-card">' +
+    '<div class="consensus-card-value">' + escapeHtml(topChamp[0]) + '</div>' +
+    '<div class="consensus-card-label">Consensus Champion</div>' +
+    '<div class="consensus-card-detail">' + topChamp[1] + '/' + total + ' modes (' + champPct + '%)</div>' +
+  '</div>';
+
+  html += '<div class="consensus-card">' +
+    '<div class="consensus-card-value">' + champArr.length + '</div>' +
+    '<div class="consensus-card-label">Different Champions</div>' +
+    '<div class="consensus-card-detail">' + champArr.slice(0, 3).map(function(e) { return e[0] + ' (' + e[1] + ')'; }).join(', ') + '</div>' +
+  '</div>';
+
+  if (unanimousFF.length > 0) {
+    html += '<div class="consensus-card">' +
+      '<div class="consensus-card-value">' + unanimousFF.length + '</div>' +
+      '<div class="consensus-card-label">Unanimous Final Four</div>' +
+      '<div class="consensus-card-detail">' + unanimousFF.join(', ') + '</div>' +
+    '</div>';
+  }
+
+  // Most common FF team
+  if (ffArr.length > 0) {
+    html += '<div class="consensus-card">' +
+      '<div class="consensus-card-value">' + ffArr[0][1] + '/' + total + '</div>' +
+      '<div class="consensus-card-label">Top FF Consensus</div>' +
+      '<div class="consensus-card-detail">' + escapeHtml(ffArr[0][0]) + '</div>' +
+    '</div>';
+  }
+
+  gridEl.innerHTML = html;
+  panel.style.display = '';
+}
+
+function renderCompareChart(comparisons) {
+  var wrap = document.getElementById('compare-chart-wrap');
+  var canvas = document.getElementById('compare-chart');
+  if (!wrap || !canvas || typeof Chart === 'undefined') return;
+
+  // Aggregate top teams across all modes
+  var teamProbs = {};
+  comparisons.forEach(function(comp) {
+    if (comp.topTeams) {
+      comp.topTeams.forEach(function(t) {
+        if (!teamProbs[t.name]) teamProbs[t.name] = [];
+        teamProbs[t.name].push(t.probability);
+      });
+    }
+  });
+
+  // Get top 10 teams by average probability
+  var teamAvgs = Object.entries(teamProbs).map(function(entry) {
+    var probs = entry[1];
+    var avg = probs.reduce(function(s, v) { return s + v; }, 0) / comparisons.length;
+    var max = Math.max.apply(null, probs);
+    var min = probs.length < comparisons.length ? 0 : Math.min.apply(null, probs);
+    return { name: entry[0], avg: avg, max: max, min: min };
+  }).sort(function(a, b) { return b.avg - a.avg; }).slice(0, 10);
+
+  var labels = teamAvgs.map(function(t) { return t.name; });
+  var avgs = teamAvgs.map(function(t) { return +(t.avg * 100).toFixed(1); });
+  var maxes = teamAvgs.map(function(t) { return +(t.max * 100).toFixed(1); });
+  var mins = teamAvgs.map(function(t) { return +(t.min * 100).toFixed(1); });
+
+  // Destroy previous chart if exists
+  if (window._compareChartInstance) {
+    window._compareChartInstance.destroy();
+  }
+
+  var textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#999';
+  var gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#333';
+
+  window._compareChartInstance = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Avg Champ%',
+          data: avgs,
+          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          borderRadius: 4,
+        },
+        {
+          label: 'Max (best mode)',
+          data: maxes,
+          backgroundColor: 'rgba(34, 197, 94, 0.35)',
+          borderRadius: 4,
+        },
+        {
+          label: 'Min (worst mode)',
+          data: mins,
+          backgroundColor: 'rgba(239, 68, 68, 0.25)',
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: textColor, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ctx.dataset.label + ': ' + ctx.parsed.y + '%'; }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } },
+        y: {
+          ticks: { color: textColor, callback: function(v) { return v + '%'; } },
+          grid: { color: gridColor },
+        },
+      },
+    },
+  });
+  wrap.style.display = '';
+}
+
 function renderComparison(comparisons) {
   const grid = document.getElementById('compare-grid');
   if (!grid) return;
   grid.innerHTML = '';
+
+  // Render consensus summary and chart first
+  renderConsensus(comparisons);
+  renderCompareChart(comparisons);
 
   comparisons.forEach(comp => {
     const card = document.createElement('div');
@@ -1834,6 +1998,7 @@ async function simulateBracket() {
       if (data.error) throw new Error(data.error);
     }
     lastData = data;
+    if (data.globalSimCount) updateSimCounter(data.globalSimCount);
 
     renderBracket();
     showToast(`Bracket simulated: ${sims.toLocaleString()} runs with ${modes.find(m => m.id === modeId)?.name || modeId}`, 'success');
@@ -2831,6 +2996,23 @@ function connectWebSocket() {
   };
 }
 
+function resolveTeamName(teamId) {
+  if (!teamId) return 'TBD';
+  var team = allTeams.find(function(t) { return t.id === teamId; });
+  return team ? (team.shortName || team.name) : teamId;
+}
+
+function resolveTeamSeed(teamId) {
+  if (!teamId) return '';
+  var team = allTeams.find(function(t) { return t.id === teamId; });
+  return team ? team.seed : '';
+}
+
+function getTeamPrediction(teamId) {
+  if (!lastData || !lastData.rawResults || !teamId) return null;
+  return lastData.rawResults.find(function(r) { return r.teamId === teamId; });
+}
+
 function renderLiveGames(payload) {
   const container = document.getElementById('live-games');
   if (!container) return;
@@ -2851,22 +3033,50 @@ function renderLiveGames(payload) {
     const isLive = game.status === 'in-progress' || game.status === 'halftime';
     const isFinal = game.status === 'final';
 
+    const homeName = resolveTeamName(game.homeTeamId);
+    const awayName = resolveTeamName(game.awayTeamId);
+    const homeSeed = resolveTeamSeed(game.homeTeamId);
+    const awaySeed = resolveTeamSeed(game.awayTeamId);
+
+    // Check if this is an upset in progress (lower seed winning)
+    var isUpset = false;
+    if (homeSeed && awaySeed) {
+      var hs = parseInt(homeSeed), as = parseInt(awaySeed);
+      if (hs > as && game.homeScore > game.awayScore) isUpset = true;
+      if (as > hs && game.awayScore > game.homeScore) isUpset = true;
+    }
+
+    // Get prediction overlay
+    var predHtml = '';
+    var homePred = getTeamPrediction(game.homeTeamId);
+    var awayPred = getTeamPrediction(game.awayTeamId);
+    if (homePred && awayPred) {
+      var hChamp = (homePred.championshipProbability * 100).toFixed(1);
+      var aChamp = (awayPred.championshipProbability * 100).toFixed(1);
+      predHtml = '<div class="live-game-prediction">Engine: ' +
+        homeName + ' ' + hChamp + '% vs ' + awayName + ' ' + aChamp + '% champ</div>';
+    }
+
     return `
-      <div class="live-game-card ${isFinal ? 'game-final' : ''} ${isLive ? 'game-live' : ''}">
+      <div class="live-game-card ${isFinal ? 'game-final' : ''} ${isLive ? 'game-live' : ''} ${isUpset && isLive ? 'game-upset' : ''}">
         <div class="live-game-header">
           ${isLive ? '<span class="live-pulse"></span>' : ''}
+          ${isUpset && isLive ? '<span class="live-upset-tag">UPSET</span>' : ''}
           <span class="live-game-time">${timeDisplay}</span>
         </div>
         <div class="live-game-teams">
           <div class="live-team ${game.homeScore > game.awayScore ? 'winning' : ''}">
-            <span class="live-team-name">${game.homeTeamId}</span>
+            <span class="live-team-seed">${homeSeed ? '(' + homeSeed + ')' : ''}</span>
+            <span class="live-team-name">${homeName}</span>
             <span class="live-team-score">${game.homeScore}</span>
           </div>
           <div class="live-team ${game.awayScore > game.homeScore ? 'winning' : ''}">
-            <span class="live-team-name">${game.awayTeamId}</span>
+            <span class="live-team-seed">${awaySeed ? '(' + awaySeed + ')' : ''}</span>
+            <span class="live-team-name">${awayName}</span>
             <span class="live-team-score">${game.awayScore}</span>
           </div>
         </div>
+        ${predHtml}
       </div>
     `;
   }).join('');
@@ -2907,6 +3117,16 @@ function escapeHtml(str) {
   var div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+function formatNumber(num) {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toLocaleString();
+}
+
+function updateSimCounter(count) {
+  setTextContent('stat-sims-run', formatNumber(count));
 }
 
 function formatPct(value) {
@@ -4525,7 +4745,7 @@ function setupThemeToggle() {
 function setupShareButton() {
   var btn = document.getElementById('btn-share-bracket');
   if (!btn) return;
-  btn.addEventListener('click', function() {
+  btn.addEventListener('click', async function() {
     if (!lastData || !lastData.rawResults) {
       showToast('Run a simulation first', 'warning');
       return;
@@ -4537,22 +4757,53 @@ function setupShareButton() {
     var modeName = mode ? mode.name : currentMode;
     var champ = results[0];
 
+    // Build Final Four names
+    var ffNames = [];
+    if (lastData.mostLikelyFinalFour) {
+      lastData.mostLikelyFinalFour.forEach(function(id) {
+        var t = results.find(function(r) { return r.teamId === id; });
+        if (t) ffNames.push(t.teamName);
+      });
+    }
+
     var lines = [
       'MadnessEngine 2026 Prediction',
       'Mode: ' + modeName,
       '',
       'Predicted Champion: ' + champ.teamName + ' (' + champ.seed + '-seed)',
       'Championship Odds: ' + (champ.championshipProbability * 100).toFixed(1) + '%',
-      '',
-      'Top 5:',
     ];
+    if (ffNames.length > 0) {
+      lines.push('Final Four: ' + ffNames.join(', '));
+    }
+    lines.push('');
+    lines.push('Top 5:');
     results.slice(0, 5).forEach(function(t, i) {
       lines.push((i + 1) + '. ' + t.teamName + ' (' + t.seed + ') - ' + (t.championshipProbability * 100).toFixed(1) + '%');
     });
     lines.push('');
     lines.push('https://madness-engine.onrender.com');
 
-    navigator.clipboard.writeText(lines.join('\n')).then(function() {
+    var shareText = lines.join('\n');
+
+    // Try native Web Share API first (mobile), fallback to clipboard
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'MadnessEngine — ' + champ.teamName + ' wins it all',
+          text: shareText,
+          url: 'https://madness-engine.onrender.com',
+        });
+        trackEvent('share_bracket_native', { mode: currentMode });
+        showToast('Shared!', 'success');
+        return;
+      } catch (e) {
+        // User cancelled or share failed, fall through to clipboard
+        if (e.name === 'AbortError') return;
+      }
+    }
+
+    navigator.clipboard.writeText(shareText).then(function() {
       trackEvent('share_bracket', { mode: currentMode });
       showToast('Results copied to clipboard!', 'success');
     }).catch(function() {

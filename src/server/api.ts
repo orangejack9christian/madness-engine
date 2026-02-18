@@ -65,6 +65,27 @@ const wsClients = new Set<WebSocket>();
 // Cache for simulation results
 let cachedResults: Map<string, any> = new Map();
 
+// Global simulation counter (persisted to disk)
+const SIM_COUNTER_PATH = path.resolve(CONFIG.DATA_DIR, 'sim-counter.json');
+
+function getSimCount(): number {
+  try {
+    if (fs.existsSync(SIM_COUNTER_PATH)) {
+      return JSON.parse(fs.readFileSync(SIM_COUNTER_PATH, 'utf-8')).count || 0;
+    }
+  } catch { /* ignore */ }
+  return 0;
+}
+
+function incrementSimCount(sims: number): number {
+  const current = getSimCount();
+  const newCount = current + sims;
+  try {
+    fs.writeFileSync(SIM_COUNTER_PATH, JSON.stringify({ count: newCount, updatedAt: new Date().toISOString() }));
+  } catch { /* ignore write errors */ }
+  return newCount;
+}
+
 // Shared game state tracker (used by ESPN poller, manual input, and real-time loop)
 const gameStateTracker = new GameStateTracker();
 
@@ -158,8 +179,9 @@ app.get('/api/simulate/:type/:modeId', (req, res) => {
       volatilityIndex: result.volatilityIndex,
     };
 
+    incrementSimCount(sims);
     cachedResults.set(cacheKey, { data: responseData, timestamp: Date.now() });
-    res.json(responseData);
+    res.json({ ...responseData, globalSimCount: getSimCount() });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -359,6 +381,7 @@ app.post('/api/whatif/:type/:modeId', (req, res) => {
     const report = generateReport(result);
     const teamResults = [...result.teamResults.values()];
 
+    incrementSimCount(sims);
     res.json({
       report,
       rawResults: teamResults.map(t => ({
@@ -374,10 +397,16 @@ app.post('/api/whatif/:type/:modeId', (req, res) => {
       mostLikelyChampion: result.mostLikelyChampion,
       volatilityIndex: result.volatilityIndex,
       lockedResults: lockedResults || [],
+      globalSimCount: getSimCount(),
     });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// === Global Stats ===
+app.get('/api/stats', (_req, res) => {
+  res.json({ globalSimCount: getSimCount() });
 });
 
 // === Feedback Endpoints ===

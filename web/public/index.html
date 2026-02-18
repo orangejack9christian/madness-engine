@@ -8,9 +8,13 @@
   <meta property="og:title" content="MadnessEngine — March Madness Simulator 2026">
   <meta property="og:description" content="20 simulation modes. 68 teams. One champion. Predict March Madness with advanced Monte Carlo simulations.">
   <meta property="og:type" content="website">
+  <meta property="og:image" content="https://madness-engine.onrender.com/og-image.svg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="MadnessEngine — March Madness Simulator 2026">
   <meta name="twitter:description" content="20 simulation modes. 68 teams. One champion.">
+  <meta name="twitter:image" content="https://madness-engine.onrender.com/og-image.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -349,10 +353,13 @@
               <button class="btn-compare" id="btn-compare">Compare All Modes</button>
             </div>
           </div>
-          <div class="compare-grid" id="compare-grid"></div>
-          <div class="compare-chart-container">
+          <div class="consensus-panel" id="consensus-panel" style="display:none;">
+            <div class="consensus-grid" id="consensus-grid"></div>
+          </div>
+          <div class="compare-chart-container" id="compare-chart-wrap" style="display:none;">
             <canvas id="compare-chart"></canvas>
           </div>
+          <div class="compare-grid" id="compare-grid"></div>
         </section>
 
       </div>
