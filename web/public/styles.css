@@ -3493,6 +3493,22 @@ input:focus:not(:focus-visible) {
 .accuracy-empty-desc {
   font-size: 0.82rem;
 }
+.accuracy-how-it-works {
+  margin-top: 1.5rem;
+  text-align: left;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.accuracy-how-it-works ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+.accuracy-how-it-works li {
+  margin-bottom: 0.3rem;
+}
 
 /* ══════════════════════════════════════════════════
    COMPARE HINT & MISC
