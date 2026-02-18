@@ -367,6 +367,12 @@ function renderDashboard(data) {
   const mode = modes.find(m => m.id === currentMode);
   setTextContent('stat-mode-cat', mode ? capitalize(mode.category) : '--');
 
+  // Cinderella Watch — low seeds with upset potential
+  renderCinderellaWatch(rawResults);
+
+  // Hot Takes — bold predictions from the engine
+  renderHotTakes(rawResults, data);
+
   // Show compare section if multiple modes
   const compareSection = document.getElementById('compare-section');
   if (compareSection) compareSection.style.display = modes.length > 1 ? '' : 'none';
@@ -554,6 +560,122 @@ function renderRegions(breakdowns) {
   });
 }
 
+
+// ═══════════════════════════════════════════════════════
+// SECTION 5B: CINDERELLA WATCH & HOT TAKES
+// ═══════════════════════════════════════════════════════
+
+function renderCinderellaWatch(rawResults) {
+  const container = document.getElementById('cinderella-list');
+  if (!container || !rawResults) return;
+
+  // Find low seeds (9+) with meaningful upset potential
+  const cinderellas = rawResults
+    .filter(t => t.seed >= 9 && t.championshipProbability > 0)
+    .sort((a, b) => b.expectedWins - a.expectedWins)
+    .slice(0, 6);
+
+  if (cinderellas.length === 0) {
+    container.innerHTML = '<div class="insights-empty">No significant Cinderella candidates in this simulation</div>';
+    return;
+  }
+
+  container.innerHTML = cinderellas.map(t => {
+    const s16 = t.roundProbabilities ? (t.roundProbabilities['Sweet 16'] || t.roundProbabilities['S16'] || 0) : 0;
+    const s16Pct = (s16 * 100).toFixed(1);
+    const champPct = (t.championshipProbability * 100).toFixed(2);
+    return `<div class="cinderella-item">
+      ${teamBadge(t.teamId, 24)}
+      <span class="cinderella-seed">#${t.seed}</span>
+      <span class="cinderella-name">${t.teamName}</span>
+      <span class="cinderella-stat">
+        ${s16Pct}% S16
+        <div class="cinderella-stat-label">${champPct}% champ</div>
+      </span>
+    </div>`;
+  }).join('');
+}
+
+function renderHotTakes(rawResults, data) {
+  const container = document.getElementById('hot-takes-list');
+  if (!container || !rawResults) return;
+
+  const takes = [];
+
+  // 1. Biggest upset: lowest seed with highest E[Wins]
+  const lowSeedStars = rawResults
+    .filter(t => t.seed >= 10)
+    .sort((a, b) => b.expectedWins - a.expectedWins);
+  if (lowSeedStars.length > 0) {
+    const star = lowSeedStars[0];
+    takes.push({
+      icon: '\u{1F525}',  // fire
+      text: `<span class="hot-take-bold">${star.teamName}</span> (${star.seed}-seed) averages <span class="hot-take-bold">${star.expectedWins.toFixed(1)} wins</span> — best among double-digit seeds`,
+    });
+  }
+
+  // 2. Top seed in danger — 1/2 seed with lowest E[Wins]
+  const topSeeds = rawResults
+    .filter(t => t.seed <= 2)
+    .sort((a, b) => a.expectedWins - b.expectedWins);
+  if (topSeeds.length > 0) {
+    const weak = topSeeds[0];
+    takes.push({
+      icon: '\u{26A0}\u{FE0F}',  // warning
+      text: `<span class="hot-take-bold">${weak.teamName}</span> (${weak.seed}-seed) is the weakest top seed at only <span class="hot-take-bold">${(weak.championshipProbability * 100).toFixed(1)}%</span> championship odds`,
+    });
+  }
+
+  // 3. Dark horse — seed 5-8 with highest champ%
+  const darkHorses = rawResults
+    .filter(t => t.seed >= 5 && t.seed <= 8)
+    .sort((a, b) => b.championshipProbability - a.championshipProbability);
+  if (darkHorses.length > 0) {
+    const horse = darkHorses[0];
+    takes.push({
+      icon: '\u{1F3C7}',  // horse racing
+      text: `Dark horse: <span class="hot-take-bold">${horse.teamName}</span> (${horse.seed}-seed) has a <span class="hot-take-bold">${(horse.championshipProbability * 100).toFixed(1)}%</span> shot at the title`,
+    });
+  }
+
+  // 4. Region of death — region with highest average seed in FF
+  if (data.report && data.report.regionBreakdowns) {
+    const regionStrength = data.report.regionBreakdowns.map(r => {
+      const avgSeed = r.teams.reduce((sum, t) => sum + t.seed, 0) / Math.max(r.teams.length, 1);
+      const topTeamFF = r.teams.length > 0 ? (parseFloat(r.teams[0].finalFourPct) || 0) : 0;
+      return { region: r.region, avgSeed, topTeamFF };
+    }).sort((a, b) => a.topTeamFF - b.topTeamFF);
+    if (regionStrength.length > 0) {
+      const tough = regionStrength[0];
+      takes.push({
+        icon: '\u{1F480}',  // skull
+        text: `The <span class="hot-take-bold">${capitalize(tough.region)}</span> region is the region of death — best team there has only <span class="hot-take-bold">${tough.topTeamFF.toFixed(1)}%</span> Final Four odds`,
+      });
+    }
+  }
+
+  // 5. Volatility take
+  if (data.volatilityIndex > 0.15) {
+    takes.push({
+      icon: '\u{1F3B0}',  // slot machine
+      text: `High chaos alert! Volatility index is <span class="hot-take-bold">${(data.volatilityIndex * 100).toFixed(1)}%</span> — expect upsets this year`,
+    });
+  } else if (data.volatilityIndex < 0.08) {
+    takes.push({
+      icon: '\u{1F6E1}\u{FE0F}',  // shield
+      text: `Chalk year predicted: volatility is only <span class="hot-take-bold">${(data.volatilityIndex * 100).toFixed(1)}%</span> — favorites should hold`,
+    });
+  }
+
+  if (takes.length === 0) {
+    container.innerHTML = '<div class="insights-empty">Run a simulation to generate hot takes</div>';
+    return;
+  }
+
+  container.innerHTML = takes.map(t =>
+    `<div class="hot-take-item"><span class="hot-take-icon">${t.icon}</span>${t.text}</div>`
+  ).join('');
+}
 
 // ═══════════════════════════════════════════════════════
 // SECTION 6: FINAL FOUR
@@ -1624,22 +1746,29 @@ function setupBracketToolbar() {
     simBtn.addEventListener('click', () => simulateBracket());
   }
 
+  const zoomLabel = document.getElementById('bracket-zoom-level');
+  function updateZoomLabel() {
+    if (zoomLabel) zoomLabel.textContent = Math.round(bracketScale * 100) + '%';
+  }
   if (zoomIn) {
     zoomIn.addEventListener('click', () => {
       bracketScale = Math.min(bracketScale + 0.15, 2.0);
       if (svgContainer) svgContainer.style.transform = `scale(${bracketScale})`;
+      updateZoomLabel();
     });
   }
   if (zoomOut) {
     zoomOut.addEventListener('click', () => {
       bracketScale = Math.max(bracketScale - 0.15, 0.4);
       if (svgContainer) svgContainer.style.transform = `scale(${bracketScale})`;
+      updateZoomLabel();
     });
   }
   if (zoomReset) {
     zoomReset.addEventListener('click', () => {
       bracketScale = 1.0;
       if (svgContainer) svgContainer.style.transform = `scale(1)`;
+      updateZoomLabel();
     });
   }
   if (regionFilter) {
