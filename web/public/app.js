@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupFeedbackPanel();
   setupModeExplainer();
   setupChallenge();
+  setupTeamCompare();
   setupThemeToggle();
   setupHamburgerMenu();
 
@@ -213,6 +214,7 @@ function setupTournamentToggle() {
       lastData = null;
       bracketData = null;
       allTeams = [];
+      clearCompareSelection();
       loadTeams();
       if (currentMode) runSimulation();
       if (currentView === 'bracket') loadBracket();
@@ -320,6 +322,10 @@ function showLoading(show) {
   const dashboard = document.getElementById('dashboard');
   if (loading) loading.style.display = show ? 'flex' : 'none';
   if (dashboard) dashboard.style.display = show ? 'none' : 'flex';
+  if (show) {
+    // Show skeleton placeholders in tables while loading
+    showTableSkeleton('champ-tbody', 9, 10);
+  }
 }
 
 function renderDashboard(data) {
@@ -391,6 +397,7 @@ function renderChampTable(odds) {
     tr.dataset.teamName = (row.teamName || '').toLowerCase();
     tr.dataset.region = (row.region || '').toLowerCase();
     tr.dataset.seed = row.seed;
+    tr.dataset.teamId = row.teamId || '';
 
     const seedClass = row.seed <= 4 ? `seed-${row.seed}` : '';
     const regionClass = `region-${row.region}`;
@@ -406,6 +413,14 @@ function renderChampTable(odds) {
       <td class="col-prob" data-sort-value="${parseFloat(row.sweetSixteenPct) || 0}"><span class="prob-cell ${probColor(row.sweetSixteenPct)}">${row.sweetSixteenPct}</span></td>
       <td class="col-ew" data-sort-value="${parseFloat(row.expectedWins) || 0}">${row.expectedWins}</td>
     `;
+
+    tr.addEventListener('click', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        toggleTeamCompare(row.teamId);
+      }
+    });
+
     tbody.appendChild(tr);
   });
 
@@ -688,7 +703,7 @@ function renderTeamsTable() {
   tbody.innerHTML = '';
 
   if (!allTeams || allTeams.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="17" style="text-align:center;padding:2rem;color:var(--text-tertiary)">Loading teams...</td></tr>';
+    showTableSkeleton('teams-tbody', 17, 12);
     return;
   }
 
@@ -740,7 +755,14 @@ function renderTeamsTable() {
       <td class="col-ew">${ew}</td>
     `;
 
-    tr.addEventListener('click', () => showTeamDetail(team.id));
+    tr.addEventListener('click', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        toggleTeamCompare(team.id);
+      } else {
+        showTeamDetail(team.id);
+      }
+    });
     tbody.appendChild(tr);
   });
 
@@ -984,11 +1006,18 @@ function showTeamDetail(teamId) {
   '</div>';
 
   // ── Assemble panel HTML ──
+  var isInCompare = compareSelectedTeams.indexOf(teamId) >= 0;
+  var compareBtnLabel = isInCompare ? 'Remove from Compare' : 'Add to Compare';
   var closeHtml = '<div class="team-detail-header" style="position:sticky;top:0;z-index:5;background:var(--bg-secondary);padding:0.75rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">' +
     '<span style="font-weight:700;font-size:0.85rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;">Team Details</span>' +
-    '<button class="team-detail-close" id="team-detail-close" title="Close">' +
-      '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
-    '</button>' +
+    '<div style="display:flex;align-items:center;gap:0.5rem;">' +
+      '<button class="compare-bar-btn compare-bar-go" id="td-compare-btn" style="font-size:0.72rem;padding:0.3rem 0.65rem;" title="' + compareBtnLabel + '">' +
+        compareBtnLabel +
+      '</button>' +
+      '<button class="team-detail-close" id="team-detail-close" title="Close">' +
+        '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+      '</button>' +
+    '</div>' +
   '</div>';
 
   panel.innerHTML = closeHtml +
@@ -1008,6 +1037,17 @@ function showTeamDetail(teamId) {
   var radarCanvas = document.getElementById('td-radar-canvas');
   if (radarCanvas && typeof Chart !== 'undefined') {
     createTeamRadarChart(radarCanvas.getContext('2d'), team);
+  }
+
+  // Compare button handler
+  var tdCompareBtn = document.getElementById('td-compare-btn');
+  if (tdCompareBtn) {
+    tdCompareBtn.onclick = function() {
+      toggleTeamCompare(teamId);
+      // Update button text
+      var nowIn = compareSelectedTeams.indexOf(teamId) >= 0;
+      tdCompareBtn.textContent = nowIn ? 'Remove from Compare' : 'Add to Compare';
+    };
   }
 
   // Close button handler
@@ -3315,7 +3355,515 @@ async function loadAccuracy() {
 
 
 // ═══════════════════════════════════════════════════════
-// SECTION 18: THEME TOGGLE (DARK/LIGHT)
+// SECTION 18: TEAM COMPARISON OVERLAY
+// ═══════════════════════════════════════════════════════
+
+var compareSelectedTeams = [];
+
+function setupTeamCompare() {
+  var goBtn = document.getElementById('compare-bar-go');
+  var clearBtn = document.getElementById('compare-bar-clear');
+  var closeBtn = document.getElementById('compare-overlay-close');
+  var overlay = document.getElementById('compare-overlay');
+
+  if (goBtn) {
+    goBtn.addEventListener('click', function() {
+      if (compareSelectedTeams.length >= 2) {
+        openCompareOverlay();
+      }
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function() {
+      clearCompareSelection();
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function() {
+      if (overlay) overlay.classList.remove('open');
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  }
+}
+
+function toggleTeamCompare(teamId) {
+  var idx = compareSelectedTeams.indexOf(teamId);
+  if (idx >= 0) {
+    compareSelectedTeams.splice(idx, 1);
+  } else {
+    if (compareSelectedTeams.length >= 4) {
+      showToast('Maximum 4 teams for comparison', 'warning');
+      return;
+    }
+    compareSelectedTeams.push(teamId);
+  }
+  updateCompareBar();
+  updateCompareHighlights();
+  trackEvent('team_compare_toggle', { teamId: teamId, count: compareSelectedTeams.length });
+}
+
+function clearCompareSelection() {
+  compareSelectedTeams = [];
+  updateCompareBar();
+  updateCompareHighlights();
+}
+
+function updateCompareBar() {
+  var bar = document.getElementById('compare-bar');
+  var teamsContainer = document.getElementById('compare-bar-teams');
+  var countEl = document.getElementById('compare-bar-count');
+  var goBtn = document.getElementById('compare-bar-go');
+
+  if (!bar || !teamsContainer) return;
+
+  var count = compareSelectedTeams.length;
+
+  // Show/hide bar
+  if (count > 0) {
+    bar.classList.add('visible');
+  } else {
+    bar.classList.remove('visible');
+  }
+
+  // Update count
+  if (countEl) countEl.textContent = count + ' selected';
+
+  // Enable/disable compare button
+  if (goBtn) goBtn.disabled = count < 2;
+
+  // Render chips
+  if (count === 0) {
+    teamsContainer.innerHTML = '<span class="compare-bar-hint">Click teams to compare (2-4)</span>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < compareSelectedTeams.length; i++) {
+    var tid = compareSelectedTeams[i];
+    var team = allTeams.find(function(t) { return t.id === tid; });
+    if (!team) continue;
+    var regionColor = REGION_COLORS[(team.region || '').toLowerCase()] || '#666';
+    html += '<div class="compare-bar-chip" style="border-left: 3px solid ' + regionColor + ';">' +
+      '<span class="compare-bar-chip-seed">' + team.seed + '</span>' +
+      '<span>' + (team.shortName || team.name) + '</span>' +
+      '<button class="compare-bar-chip-remove" data-team-id="' + tid + '">&times;</button>' +
+    '</div>';
+  }
+  teamsContainer.innerHTML = html;
+
+  // Attach remove handlers
+  teamsContainer.querySelectorAll('.compare-bar-chip-remove').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      toggleTeamCompare(btn.dataset.teamId);
+    });
+  });
+}
+
+function updateCompareHighlights() {
+  // Highlight selected rows in data tables
+  document.querySelectorAll('.data-table tbody tr[data-team-id]').forEach(function(tr) {
+    var tid = tr.dataset.teamId;
+    if (compareSelectedTeams.indexOf(tid) >= 0) {
+      tr.classList.add('compare-selected');
+    } else {
+      tr.classList.remove('compare-selected');
+    }
+  });
+}
+
+function openCompareOverlay() {
+  var overlay = document.getElementById('compare-overlay');
+  var body = document.getElementById('compare-overlay-body');
+  if (!overlay || !body) return;
+
+  trackEvent('team_compare_open', { teams: compareSelectedTeams.slice() });
+
+  // Gather team data
+  var teams = [];
+  for (var i = 0; i < compareSelectedTeams.length; i++) {
+    var tid = compareSelectedTeams[i];
+    var team = allTeams.find(function(t) { return t.id === tid; });
+    if (!team) continue;
+
+    var sim = null;
+    if (lastData && lastData.rawResults) {
+      for (var j = 0; j < lastData.rawResults.length; j++) {
+        if (lastData.rawResults[j].teamId === tid) {
+          sim = lastData.rawResults[j];
+          break;
+        }
+      }
+    }
+    teams.push({ team: team, sim: sim });
+  }
+
+  if (teams.length < 2) return;
+
+  var gridClass = 'cmp-grid cmp-grid-' + teams.length;
+
+  // Helper to format values
+  function fv(val, dec, mult, suf) {
+    if (val == null) return '--';
+    var v = mult ? val * mult : val;
+    return v.toFixed(dec != null ? dec : 1) + (suf || '');
+  }
+
+  // Define comparison metrics
+  var metrics = [
+    { key: 'adjOffensiveEfficiency', label: 'Adj. Off. Eff.', dec: 1, higher: true },
+    { key: 'adjDefensiveEfficiency', label: 'Adj. Def. Eff.', dec: 1, higher: false },
+    { key: 'adjTempo', label: 'Tempo', dec: 1, higher: null },
+    { key: 'strengthOfSchedule', label: 'SOS', dec: 3, higher: true },
+    { key: 'effectiveFGPct', label: 'eFG%', dec: 1, mult: 100, suf: '%', higher: true },
+    { key: 'turnoverPct', label: 'TO%', dec: 1, mult: 100, suf: '%', higher: false },
+    { key: 'offensiveReboundPct', label: 'OR%', dec: 1, mult: 100, suf: '%', higher: true },
+    { key: 'defensiveReboundPct', label: 'DR%', dec: 1, mult: 100, suf: '%', higher: true },
+    { key: 'freeThrowRate', label: 'FT Rate', dec: 1, mult: 100, suf: '%', higher: true },
+    { key: 'threePointPct', label: '3P%', dec: 1, mult: 100, suf: '%', higher: true },
+    { key: 'stealPct', label: 'Steal%', dec: 1, mult: 100, suf: '%', higher: true }
+  ];
+
+  // Probability rounds
+  var probRounds = [
+    { key: 'round-of-32', label: 'R32' },
+    { key: 'sweet-sixteen', label: 'S16' },
+    { key: 'elite-eight', label: 'E8' },
+    { key: 'final-four', label: 'FF' },
+    { key: 'championship', label: 'Champ' }
+  ];
+
+  // ── Build Team Columns ──
+  var columnsHtml = '<div class="' + gridClass + '">';
+
+  for (var ti = 0; ti < teams.length; ti++) {
+    var t = teams[ti].team;
+    var s = teams[ti].sim;
+    var m = t.metrics || {};
+    var rc = REGION_COLORS[(t.region || '').toLowerCase()] || '#666';
+    var record = m.wins != null ? m.wins + '-' + (m.losses || 0) : '--';
+
+    columnsHtml += '<div class="cmp-team-col" style="border-top: 3px solid ' + rc + ';">';
+
+    // Header
+    columnsHtml += '<div class="cmp-team-header">' +
+      teamBadge(t.id, 36) +
+      '<div class="cmp-team-name">' + t.name + '</div>' +
+      '<div class="cmp-team-meta">' +
+        '<span class="seed-badge seed-' + (t.seed <= 4 ? t.seed : '') + '">' + t.seed + '</span>' +
+        '<span class="region-tag region-' + (t.region || '') + '">' + capitalize(t.region) + '</span>' +
+        '<span>' + record + '</span>' +
+      '</div>' +
+    '</div>';
+
+    // Probability Section
+    columnsHtml += '<div class="cmp-section">' +
+      '<div class="cmp-section-title">Tournament Probability</div>';
+
+    for (var pi = 0; pi < probRounds.length; pi++) {
+      var pr = probRounds[pi];
+      var pct = 0;
+      if (s) {
+        if (pr.key === 'championship') {
+          pct = (s.championshipProbability || 0) * 100;
+        } else if (s.roundProbabilities) {
+          pct = (s.roundProbabilities[pr.key] || 0) * 100;
+        }
+      }
+      columnsHtml += '<div class="cmp-prob-row">' +
+        '<span class="cmp-prob-label">' + pr.label + '</span>' +
+        '<div class="cmp-prob-bar-bg"><div class="cmp-prob-bar" style="width:' + Math.min(pct, 100) + '%;background:' + rc + ';"></div></div>' +
+        '<span class="cmp-prob-pct">' + pct.toFixed(1) + '%</span>' +
+      '</div>';
+    }
+
+    // Expected Wins
+    if (s) {
+      columnsHtml += '<div class="cmp-stat-row" style="margin-top:0.5rem;">' +
+        '<span class="cmp-stat-label">E[Wins]</span>' +
+        '<span class="cmp-stat-value">' + s.expectedWins.toFixed(2) + '</span>' +
+      '</div>';
+    }
+
+    columnsHtml += '</div>';
+
+    // Advanced Stats Section
+    columnsHtml += '<div class="cmp-section">' +
+      '<div class="cmp-section-title">Advanced Metrics</div>';
+
+    for (var mi = 0; mi < metrics.length; mi++) {
+      var met = metrics[mi];
+      var val = m[met.key];
+      columnsHtml += '<div class="cmp-stat-row">' +
+        '<span class="cmp-stat-label">' + met.label + '</span>' +
+        '<span class="cmp-stat-value" data-metric="' + met.key + '" data-raw="' + (val != null ? val : '') + '">' +
+          fv(val, met.dec, met.mult, met.suf) +
+        '</span>' +
+      '</div>';
+    }
+
+    // Coaching info if available
+    var cp = t.coachingProfile;
+    if (cp) {
+      columnsHtml += '<div class="cmp-stat-row" style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.35rem;">' +
+        '<span class="cmp-stat-label">Coach</span>' +
+        '<span class="cmp-stat-value" style="font-family:inherit;font-size:0.78rem;">' + (cp.name || '--') + '</span>' +
+      '</div>' +
+      '<div class="cmp-stat-row">' +
+        '<span class="cmp-stat-label">Tourney Record</span>' +
+        '<span class="cmp-stat-value">' + (cp.tournamentWins || 0) + '-' + (cp.tournamentLosses || 0) + '</span>' +
+      '</div>' +
+      '<div class="cmp-stat-row">' +
+        '<span class="cmp-stat-label">Final Fours</span>' +
+        '<span class="cmp-stat-value">' + (cp.finalFourAppearances || 0) + '</span>' +
+      '</div>';
+    }
+
+    columnsHtml += '</div>';
+
+    columnsHtml += '</div>'; // end cmp-team-col
+  }
+
+  columnsHtml += '</div>'; // end grid
+
+  // ── Radar Chart Section ──
+  var radarHtml = '<div class="cmp-radar-section">' +
+    '<div class="cmp-section-title" style="padding:0 0 0.5rem 0;">Performance Comparison Radar</div>' +
+    '<div class="cmp-radar-container"><canvas id="cmp-radar-canvas"></canvas></div>' +
+  '</div>';
+
+  // ── Side-by-Side Table ──
+  var tableHtml = '<div class="cmp-table-section">' +
+    '<div class="cmp-section-title" style="padding:0 0 0.5rem 0;">Side-by-Side Metrics</div>' +
+    '<div style="overflow-x:auto;">' +
+    '<table class="cmp-compare-table"><thead><tr><th>Metric</th>';
+
+  for (var hi = 0; hi < teams.length; hi++) {
+    tableHtml += '<th style="text-align:right;">' + (teams[hi].team.shortName || teams[hi].team.name) + '</th>';
+  }
+  tableHtml += '</tr></thead><tbody>';
+
+  for (var ri = 0; ri < metrics.length; ri++) {
+    var met2 = metrics[ri];
+    // Find best value
+    var vals = [];
+    for (var vi = 0; vi < teams.length; vi++) {
+      var rawVal = teams[vi].team.metrics ? teams[vi].team.metrics[met2.key] : null;
+      vals.push(rawVal);
+    }
+
+    var bestIdx = -1;
+    if (met2.higher !== null) {
+      var bestVal = null;
+      for (var bi = 0; bi < vals.length; bi++) {
+        if (vals[bi] == null) continue;
+        if (bestVal == null || (met2.higher ? vals[bi] > bestVal : vals[bi] < bestVal)) {
+          bestVal = vals[bi];
+          bestIdx = bi;
+        }
+      }
+    }
+
+    tableHtml += '<tr><td class="cmp-metric-name">' + met2.label + '</td>';
+    for (var ci = 0; ci < teams.length; ci++) {
+      var cls = ci === bestIdx ? ' cmp-best' : '';
+      tableHtml += '<td class="cmp-val' + cls + '">' + fv(vals[ci], met2.dec, met2.mult, met2.suf) + '</td>';
+    }
+    tableHtml += '</tr>';
+  }
+
+  // Add probability rows
+  for (var pri = 0; pri < probRounds.length; pri++) {
+    var pr2 = probRounds[pri];
+    tableHtml += '<tr><td class="cmp-metric-name">' + pr2.label + ' %</td>';
+    var probVals = [];
+    for (var pvi = 0; pvi < teams.length; pvi++) {
+      var s2 = teams[pvi].sim;
+      var p = 0;
+      if (s2) {
+        if (pr2.key === 'championship') {
+          p = (s2.championshipProbability || 0) * 100;
+        } else if (s2.roundProbabilities) {
+          p = (s2.roundProbabilities[pr2.key] || 0) * 100;
+        }
+      }
+      probVals.push(p);
+    }
+    var bestProbIdx = -1;
+    var bestProb = -1;
+    for (var bpi = 0; bpi < probVals.length; bpi++) {
+      if (probVals[bpi] > bestProb) { bestProb = probVals[bpi]; bestProbIdx = bpi; }
+    }
+    for (var tvi = 0; tvi < teams.length; tvi++) {
+      var pcls = tvi === bestProbIdx ? ' cmp-best' : '';
+      tableHtml += '<td class="cmp-val' + pcls + '">' + probVals[tvi].toFixed(1) + '%</td>';
+    }
+    tableHtml += '</tr>';
+  }
+
+  tableHtml += '</tbody></table></div></div>';
+
+  // Assemble
+  body.innerHTML = columnsHtml + radarHtml + tableHtml;
+
+  // Render radar chart
+  var radarCanvas = document.getElementById('cmp-radar-canvas');
+  if (radarCanvas && typeof Chart !== 'undefined') {
+    renderCompareRadarChart(radarCanvas, teams);
+  }
+
+  // Highlight best values in columns
+  highlightBestValues(body, metrics);
+
+  overlay.classList.add('open');
+}
+
+function highlightBestValues(container, metrics) {
+  for (var mi = 0; mi < metrics.length; mi++) {
+    var met = metrics[mi];
+    if (met.higher === null) continue;
+
+    var cells = container.querySelectorAll('.cmp-stat-value[data-metric="' + met.key + '"]');
+    if (cells.length < 2) continue;
+
+    var bestIdx = -1;
+    var worstIdx = -1;
+    var bestVal = null;
+    var worstVal = null;
+
+    cells.forEach(function(cell, idx) {
+      var raw = parseFloat(cell.dataset.raw);
+      if (isNaN(raw)) return;
+      if (bestVal === null || (met.higher ? raw > bestVal : raw < bestVal)) {
+        bestVal = raw;
+        bestIdx = idx;
+      }
+      if (worstVal === null || (met.higher ? raw < worstVal : raw > worstVal)) {
+        worstVal = raw;
+        worstIdx = idx;
+      }
+    });
+
+    if (bestIdx >= 0 && cells.length > 1) cells[bestIdx].classList.add('cmp-best');
+    if (worstIdx >= 0 && worstIdx !== bestIdx && cells.length > 2) cells[worstIdx].classList.add('cmp-worst');
+  }
+}
+
+function renderCompareRadarChart(canvas, teams) {
+  var RADAR_COLORS = [
+    { bg: 'rgba(59, 130, 246, 0.15)', border: '#3b82f6' },
+    { bg: 'rgba(239, 68, 68, 0.15)', border: '#ef4444' },
+    { bg: 'rgba(34, 197, 94, 0.15)', border: '#22c55e' },
+    { bg: 'rgba(168, 85, 247, 0.15)', border: '#a855f7' }
+  ];
+
+  var labels = ['Off. Eff.', 'Def. Eff.', 'Tempo', 'SOS', 'eFG%', 'FT Rate', '3P%', 'Steal%'];
+  var keys = ['adjOffensiveEfficiency', 'adjDefensiveEfficiency', 'adjTempo', 'strengthOfSchedule', 'effectiveFGPct', 'freeThrowRate', 'threePointPct', 'stealPct'];
+
+  // Compute min/max per metric for normalization
+  var mins = [];
+  var maxs = [];
+  for (var ki = 0; ki < keys.length; ki++) {
+    var allVals = [];
+    for (var ti = 0; ti < teams.length; ti++) {
+      var v = teams[ti].team.metrics ? teams[ti].team.metrics[keys[ki]] : null;
+      if (v != null) allVals.push(v);
+    }
+    // Use a wider range for better visualization
+    if (allVals.length > 0) {
+      var min = Math.min.apply(null, allVals);
+      var max = Math.max.apply(null, allVals);
+      var range = max - min;
+      mins.push(min - range * 0.2);
+      maxs.push(max + range * 0.2);
+    } else {
+      mins.push(0);
+      maxs.push(1);
+    }
+  }
+
+  var datasets = [];
+  for (var di = 0; di < teams.length; di++) {
+    var t = teams[di].team;
+    var m = t.metrics || {};
+    var data = [];
+    for (var dki = 0; dki < keys.length; dki++) {
+      var val = m[keys[dki]];
+      if (val == null) {
+        data.push(50);
+      } else {
+        // Normalize to 0-100 scale
+        var range2 = maxs[dki] - mins[dki];
+        var normalized = range2 > 0 ? ((val - mins[dki]) / range2) * 100 : 50;
+        // Invert defensive efficiency (lower is better)
+        if (keys[dki] === 'adjDefensiveEfficiency') normalized = 100 - normalized;
+        data.push(Math.max(0, Math.min(100, normalized)));
+      }
+    }
+
+    var color = RADAR_COLORS[di % RADAR_COLORS.length];
+    datasets.push({
+      label: t.shortName || t.name,
+      data: data,
+      backgroundColor: color.bg,
+      borderColor: color.border,
+      borderWidth: 2,
+      pointBackgroundColor: color.border,
+      pointRadius: 3
+    });
+  }
+
+  new Chart(canvas.getContext('2d'), {
+    type: 'radar',
+    data: { labels: labels, datasets: datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#94a3b8',
+            font: { family: 'Inter', size: 11 },
+            usePointStyle: true,
+            pointStyle: 'circle'
+          }
+        }
+      },
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 100,
+          ticks: {
+            display: false,
+            stepSize: 25
+          },
+          pointLabels: {
+            color: getComputedStyle(document.documentElement).getPropertyValue('--text-tertiary').trim() || '#64748b',
+            font: { family: 'Inter', size: 10 }
+          },
+          grid: {
+            color: getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || 'rgba(148,163,184,0.08)'
+          },
+          angleLines: {
+            color: getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || 'rgba(148,163,184,0.08)'
+          }
+        }
+      }
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════
+// SECTION 19: THEME TOGGLE (DARK/LIGHT)
 // ═══════════════════════════════════════════════════════
 
 function setupThemeToggle() {
@@ -3339,7 +3887,7 @@ function setupThemeToggle() {
 
 
 // ═══════════════════════════════════════════════════════
-// SECTION 19: MOBILE HAMBURGER MENU
+// SECTION 20: MOBILE HAMBURGER MENU
 // ═══════════════════════════════════════════════════════
 
 function setupHamburgerMenu() {
@@ -3363,7 +3911,7 @@ function setupHamburgerMenu() {
 
 
 // ═══════════════════════════════════════════════════════
-// SECTION 20: SKELETON LOADING HELPERS
+// SECTION 21: SKELETON LOADING HELPERS
 // ═══════════════════════════════════════════════════════
 
 function showSkeletonLoading(containerId, count) {

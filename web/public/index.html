@@ -29,10 +29,10 @@
 </head>
 <body>
   <!-- Top Navigation -->
-  <nav class="top-nav">
+  <nav class="top-nav" role="navigation" aria-label="Main navigation">
     <div class="nav-brand">
       <div class="brand-icon">
-        <img src="/logo.png" alt="MadnessEngine" width="36" height="28" style="object-fit: contain;">
+        <img src="/logo.png" alt="MadnessEngine" width="36" height="28" class="brand-logo">
       </div>
       <span class="brand-text">MadnessEngine</span>
       <span class="brand-badge">LIVE</span>
@@ -75,7 +75,7 @@
       </div>
       <div class="sim-counter">
         <span class="counter-label">SIMULATIONS</span>
-        <input type="number" class="sim-count-input" id="sim-count-input" value="1000" min="100" max="100000" step="500" title="Number of simulations per run">
+        <input type="number" class="sim-count-input" id="sim-count-input" value="1000" min="100" max="100000" step="500" title="Number of simulations per run" aria-label="Number of simulations">
       </div>
       <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">
         <svg class="theme-icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -88,7 +88,7 @@
   </nav>
 
   <!-- Main Content -->
-  <main class="app-main">
+  <main class="app-main" role="main">
     <!-- Mode Selector Bar -->
     <section class="mode-bar">
       <div class="mode-bar-inner">
@@ -219,7 +219,7 @@
           <div class="table-controls">
             <div class="table-search-wrapper">
               <svg class="table-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-              <input type="text" class="table-search-input" id="champ-table-search" placeholder="Search teams..." autocomplete="off">
+              <input type="text" class="table-search-input" id="champ-table-search" placeholder="Search teams..." autocomplete="off" aria-label="Search championship odds table">
             </div>
             <div class="table-view-toggles">
               <button class="table-view-btn active" data-rows="25">Top 25</button>
@@ -297,25 +297,6 @@
           </div>
         </section>
 
-        <!-- Stats Bar (legacy, kept for JS compatibility) -->
-        <section class="stats-bar">
-          <div class="stat-item">
-            <div class="stat-value" id="stat-volatility-legacy">--</div>
-            <div class="stat-label">Volatility Index</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="stat-upset-legacy">--</div>
-            <div class="stat-label">Biggest Projected Upset</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="stat-time-legacy">--</div>
-            <div class="stat-label">Last Updated</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="stat-mode-cat-legacy">--</div>
-            <div class="stat-label">Mode Category</div>
-          </div>
-        </section>
       </div>
     </div>
 
@@ -375,7 +356,7 @@
           <div class="teams-controls">
             <div class="teams-search-wrapper">
               <svg class="teams-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-              <input type="text" class="teams-search-input" id="teams-search" placeholder="Search by team, conference, or region..." autocomplete="off">
+              <input type="text" class="teams-search-input" id="teams-search" placeholder="Search by team, conference, or region..." autocomplete="off" aria-label="Search teams">
             </div>
             <select class="teams-region-filter" id="teams-region-filter">
               <option value="all">All Regions</option>
@@ -404,6 +385,10 @@
               <option value="16">16 Seed</option>
             </select>
           </div>
+        </div>
+        <div class="teams-compare-hint">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3M8 10h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Ctrl+click rows to select teams for comparison, or use "Add to Compare" in team details
         </div>
         <div class="teams-table-wrapper">
           <table class="data-table teams-table" id="teams-table">
@@ -659,20 +644,20 @@
     <!-- CHALLENGE VIEW -->
     <div class="view-section" id="view-challenge" style="display:none;">
       <div class="view-content">
-        <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:0.5rem;">Bracket Challenge</h2>
-        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1.5rem;">Save your picks and compete on the leaderboard. Make your picks on the Pick Sheet tab first, then submit them here.</p>
+        <h2 class="view-title">Bracket Challenge</h2>
+        <p class="view-subtitle">Save your picks and compete on the leaderboard. Make your picks on the Pick Sheet tab first, then submit them here.</p>
 
-        <div class="challenge-submit-section" style="display:flex;gap:1rem;align-items:flex-end;margin-bottom:2rem;flex-wrap:wrap;">
+        <div class="challenge-submit-section">
           <div>
-            <label style="font-size:0.78rem;color:var(--text-tertiary);display:block;margin-bottom:0.3rem;">Display Name</label>
-            <input type="text" id="challenge-name" class="search-input" placeholder="Your name or alias" maxlength="50" style="min-width:200px;">
+            <label class="challenge-field-label">Display Name</label>
+            <input type="text" id="challenge-name" class="search-input" placeholder="Your name or alias" maxlength="50">
           </div>
           <button class="btn-compare" id="btn-submit-challenge">Submit My Bracket</button>
-          <span id="challenge-status" style="font-size:0.82rem;color:var(--text-secondary);"></span>
+          <span id="challenge-status" class="challenge-status"></span>
         </div>
 
-        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;">Leaderboard</h3>
-        <div class="card" style="overflow-x:auto;">
+        <h3 class="section-heading">Leaderboard</h3>
+        <div class="card card-overflow">
           <table class="data-table" id="leaderboard-table">
             <thead>
               <tr>
@@ -685,7 +670,7 @@
               </tr>
             </thead>
             <tbody id="leaderboard-tbody">
-              <tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);padding:2rem;">No entries yet. Be the first to submit your bracket!</td></tr>
+              <tr><td colspan="6" class="empty-state-cell">No entries yet. Be the first to submit your bracket!</td></tr>
             </tbody>
           </table>
         </div>
@@ -695,16 +680,16 @@
     <!-- ACCURACY VIEW -->
     <div class="view-section" id="view-accuracy" style="display:none;">
       <div class="view-content">
-        <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:0.5rem;">Historical Accuracy</h2>
-        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1.5rem;">Compare how well each simulation mode predicts actual tournament outcomes. Lower Brier scores and log loss mean better predictions. Data populates as real results are entered.</p>
+        <h2 class="view-title">Historical Accuracy</h2>
+        <p class="view-subtitle">Compare how well each simulation mode predicts actual tournament outcomes. Lower Brier scores and log loss mean better predictions. Data populates as real results are entered.</p>
 
         <div id="accuracy-content">
-          <div class="accuracy-cards" id="accuracy-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:2rem;">
+          <div class="accuracy-cards" id="accuracy-cards">
             <!-- Populated by JS -->
           </div>
-          <div id="accuracy-empty" style="text-align:center;padding:3rem;color:var(--text-tertiary);">
-            <p style="font-size:1.1rem;margin-bottom:0.5rem;">No prediction data available yet</p>
-            <p style="font-size:0.82rem;">Accuracy tracking begins once actual tournament results are recorded. The system will automatically compare each mode's predictions against real outcomes.</p>
+          <div id="accuracy-empty" class="accuracy-empty">
+            <p class="accuracy-empty-title">No prediction data available yet</p>
+            <p class="accuracy-empty-desc">Accuracy tracking begins once actual tournament results are recorded. The system will automatically compare each mode's predictions against real outcomes.</p>
           </div>
         </div>
       </div>
@@ -719,7 +704,7 @@
   </div>
 
   <!-- Footer -->
-  <footer class="app-footer">
+  <footer class="app-footer" role="contentinfo">
     <div class="footer-inner">
       <span>MadnessEngine v2.0</span>
       <span class="footer-sep">·</span>
@@ -777,6 +762,33 @@
         <button class="feedback-close" id="explainer-close">&times;</button>
       </div>
       <div class="mode-explainer-body" id="explainer-body">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Compare Floating Bar -->
+  <div class="compare-bar" id="compare-bar">
+    <div class="compare-bar-inner">
+      <div class="compare-bar-teams" id="compare-bar-teams">
+        <span class="compare-bar-hint">Click teams to compare (2-4)</span>
+      </div>
+      <div class="compare-bar-actions">
+        <span class="compare-bar-count" id="compare-bar-count">0 selected</span>
+        <button class="compare-bar-btn compare-bar-go" id="compare-bar-go" disabled>Compare</button>
+        <button class="compare-bar-btn compare-bar-clear" id="compare-bar-clear">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Compare Overlay -->
+  <div class="compare-overlay" id="compare-overlay">
+    <div class="compare-overlay-panel">
+      <div class="compare-overlay-header">
+        <h3>Team Comparison</h3>
+        <button class="feedback-close" id="compare-overlay-close">&times;</button>
+      </div>
+      <div class="compare-overlay-body" id="compare-overlay-body">
         <!-- Populated by JS -->
       </div>
     </div>
